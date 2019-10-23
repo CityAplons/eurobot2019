@@ -157,6 +157,25 @@ static void terminal_hw_config()
         return;
 }
 
+static uint8_t sum_get(char *args, uint8_t len)
+{
+        uint8_t sum = 0;
+
+        while (len--) {
+                sum += (uint8_t)*args++;
+        }
+        return sum;
+}
+
+static uint8_t sum_check(char *args, uint8_t ver, int len)
+{
+        uint8_t sum = sum_get(args, len);
+        if (sum == ver)
+                return 1;
+        else
+                return 0;
+}
+
 static int term_request(terminal_task_t *term_t)
 {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
@@ -169,6 +188,11 @@ static int term_request(terminal_task_t *term_t)
 static void term_response(terminal_task_t *term_t, int resp_len)
 {
         int i = 0;
+
+        uint8_t sum_check = sum_get(term_t->com_args, resp_len);
+        term_t->com_args[resp_len] = sum_check;
+        term_t->com_args[++resp_len] = 0x04;
+        resp_len += 2;
 
         LL_USART_ClearFlag_TC(term_t->dev);
         while (resp_len--) {
@@ -193,14 +217,20 @@ void terminal_manager(void *arg)
         term_t.buffer = malloc(TERM_CH_BUF_SIZE);
         term_t.com_args = malloc(TERM_ARGS_BUF_SIZE);
         term_t.stm_dr_buff = malloc(TERM_STM_DR_BUF_SIZE);
-        term_t.com_resp = term_t.com_args;
         term_t.xTaskToNotify = xTaskGetCurrentTaskHandle();
         term_ctrl = &term_t;
         terminal_hw_config();
 
         while (1) {
+
+                int args_length = 0;
+                while(term_t.com_args[args_length] != 0x04) {
+                        args_length++;
+                }
+
                 command_code = term_request(&term_t);
                 if (!IS_COMMAND_VALID(command_code) ||
+                    !sum_check(term_t.com_args,term_t.com_args[args_length-1],args_length-1) ||
                     !commands_handlers[command_code])
                         continue;
                 resp_len = commands_handlers[command_code](term_t.com_args);
