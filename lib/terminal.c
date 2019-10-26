@@ -8,6 +8,7 @@
 #include "gpio_map.h"
 #include "terminal.h"
 #include "dev_map.h"
+#include "checksum.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -157,25 +158,6 @@ static void terminal_hw_config()
         return;
 }
 
-static uint8_t sum_get(char *args, uint8_t len)
-{
-        uint8_t sum = 0;
-
-        while (len--) {
-                sum += (uint8_t)*args++;
-        }
-        return sum;
-}
-
-static uint8_t sum_check(char *args, uint8_t ver, int len)
-{
-        uint8_t sum = sum_get(args, len);
-        if (sum == ver)
-                return 1;
-        else
-                return 0;
-}
-
 static int term_request(terminal_task_t *term_t)
 {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
@@ -189,10 +171,7 @@ static void term_response(terminal_task_t *term_t, int resp_len)
 {
         int i = 0;
 
-        uint8_t sum_check = sum_get(term_t->com_args, resp_len);
-        term_t->com_args[resp_len] = sum_check;
-        term_t->com_args[++resp_len] = 0x04;
-        resp_len += 2;
+        resp_len = sum_inject(term_t->com_args, resp_len);
 
         LL_USART_ClearFlag_TC(term_t->dev);
         while (resp_len--) {
@@ -224,16 +203,22 @@ void terminal_manager(void *arg)
         while (1) {
 
                 int args_length = 0;
-                while(term_t.com_args[args_length] != 0x04) {
-                        args_length++;
-                }
 
                 command_code = term_request(&term_t);
+                while(term_t.buffer[args_length] != 0x04) {
+                        args_length++;
+                        if(args_length == TERM_ARGS_BUF_SIZE)
+                                break;
+                }
                 if (!IS_COMMAND_VALID(command_code) ||
-                    !sum_check(term_t.com_args,term_t.com_args[args_length-1],args_length-1) ||
                     !commands_handlers[command_code])
                         continue;
-                resp_len = commands_handlers[command_code](term_t.com_args);
+                if (sum_check(term_t.buffer,term_t.buffer[args_length-1],args_length-1))
+                        resp_len = commands_handlers[command_code](term_t.com_args);
+                else {
+                        memcpy(term_t.com_args, "ER", 3);
+                        resp_len = 3;
+                }
                 term_response(&term_t, resp_len);
         }
         return;
