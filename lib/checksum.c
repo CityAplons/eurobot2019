@@ -4,6 +4,9 @@
 
 #include "checksum.h"
 
+/*
+ * Checksum calculations
+ */
 static uint8_t sum_get(char *args, uint8_t len)
 {
         uint8_t sum = 0;
@@ -14,25 +17,27 @@ static uint8_t sum_get(char *args, uint8_t len)
         return sum;
 }
 
-uint8_t sum_check(char *args, uint8_t ver, int len)
+/*
+ * Check function
+ */
+uint8_t sum_check(char *args, int len)
 {
         uint8_t sum = sum_get(args, len);
-        if (sum == ver)
+        if (sum == args[len])
                 return 1;
         else
                 return 0;
 }
 
+/*
+ * Injection to the sending messages
+ */
 uint8_t sum_inject(char *args, uint8_t len)
 {
         uint8_t sum_check = sum_get(args, len);
-        uint8_t resp_len = len + 2;
-        char *string = malloc(resp_len);
-        memcpy(string, args, len);
-        string[len] = sum_check;
-        string[++len] = 0x04;
+        char string[] = { sum_check, 0x04};
 
-        memcpy(args, string, resp_len);
+        memcpy(args+len, string, 2);
 
-        return resp_len;
+        return len+2;
 }

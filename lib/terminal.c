@@ -213,10 +213,10 @@ void terminal_manager(void *arg)
                 if (!IS_COMMAND_VALID(command_code) ||
                     !commands_handlers[command_code])
                         continue;
-                if (sum_check(term_t.buffer,term_t.buffer[args_length-1],args_length-1))
+                if (sum_check(term_t.buffer, args_length-1))
                         resp_len = commands_handlers[command_code](term_t.com_args);
                 else {
-                        memcpy(term_t.com_args, "ER", 3);
+                        memcpy(term_t.com_args, "CF", 3);
                         resp_len = 3;
                 }
                 term_response(&term_t, resp_len);
