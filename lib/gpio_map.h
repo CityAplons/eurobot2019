@@ -8,9 +8,9 @@
  * Terminal UART pinout
  */
 #define TERM_USART_TX_PORT                  GPIOB
-#define TERM_USART_TX_PIN                   LL_GPIO_PIN_6
+#define TERM_USART_TX_PIN                   LL_GPIO_PIN_10
 #define TERM_USART_RX_PORT                  GPIOB
-#define TERM_USART_RX_PIN                   LL_GPIO_PIN_7
+#define TERM_USART_RX_PIN                   LL_GPIO_PIN_11
 #define TERM_USART_PIN_AF                   LL_GPIO_AF_7
 //TODO changed on LL_GPIO_OUTPUT_OPENDRAIN with Odroid communication
 #define TERM_USART_OUTPUT_TYPE              LL_GPIO_OUTPUT_PUSHPULL
@@ -18,10 +18,10 @@
 /*
  * STMF0 driver UART pinout
  */
-#define STM_DRIVER_USART_TX_PORT            GPIOC
-#define STM_DRIVER_USART_TX_PIN             LL_GPIO_PIN_10
-#define STM_DRIVER_USART_RX_PORT            GPIOC
-#define STM_DRIVER_USART_RX_PIN             LL_GPIO_PIN_11
+#define STM_DRIVER_USART_TX_PORT            GPIOB
+#define STM_DRIVER_USART_TX_PIN             LL_GPIO_PIN_6
+#define STM_DRIVER_USART_RX_PORT            GPIOB
+#define STM_DRIVER_USART_RX_PIN             LL_GPIO_PIN_7
 #define STM_DRIVER_USART_PIN_AF             LL_GPIO_AF_7
 
 /*

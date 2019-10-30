@@ -35,7 +35,7 @@ uint8_t sum_check(char *args, int len)
 uint8_t sum_inject(char *args, uint8_t len)
 {
         uint8_t sum_check = sum_get(args, len);
-        char string[] = { sum_check, 0x04};
+        char string[] = { sum_check, 0x00 };
 
         memcpy(args+len, string, 2);
 
