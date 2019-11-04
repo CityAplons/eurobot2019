@@ -1,5 +1,7 @@
 #include "terminal_cmds.h"
 
+#include "bootloader.h"
+
 /*
  * Array of command handlers for terminal
  */
