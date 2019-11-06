@@ -161,8 +161,10 @@ static void terminal_hw_config()
 static int term_request(terminal_task_t *term_t)
 {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-                term_t->com_args = &(term_t->buffer[1]);
-                return (int)(term_t->buffer[0]);
+                term_t->com_args = &(term_t->buffer[3]);
+                term_t->length = term_t->buffer[0];
+                term_t->checksum = term_t->buffer[1];
+                return (int)(term_t->buffer[2]);
         }
         return 0;
 }
@@ -202,18 +204,12 @@ void terminal_manager(void *arg)
 
         while (1) {
 
-                int args_length = 0;
-
                 command_code = term_request(&term_t);
-                while(term_t.buffer[args_length] != 0x00) {
-                        args_length++;
-                        if(args_length == TERM_ARGS_BUF_SIZE)
-                                break;
-                }
                 if (!IS_COMMAND_VALID(command_code) ||
                     !commands_handlers[command_code])
                         continue;
-                if (sum_check(term_t.buffer, args_length-1))
+
+                if (sum_check(&(term_t.buffer[2]), term_t.checksum, term_t.length))
                         resp_len = commands_handlers[command_code](term_t.com_args);
                 else {
                         memcpy(term_t.com_args, "CF", 3);

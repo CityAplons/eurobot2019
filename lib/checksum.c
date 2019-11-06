@@ -20,10 +20,10 @@ static uint8_t sum_get(char *args, uint8_t len)
 /*
  * Check function
  */
-uint8_t sum_check(char *args, int len)
+uint8_t sum_check(char *args, uint8_t value, int len)
 {
         uint8_t sum = sum_get(args, len);
-        if (sum == args[len])
+        if (sum == value)
                 return 1;
         else
                 return 0;
@@ -35,9 +35,14 @@ uint8_t sum_check(char *args, int len)
 uint8_t sum_inject(char *args, uint8_t len)
 {
         uint8_t sum_check = sum_get(args, len);
-        char string[] = { sum_check, 0x00 };
+        char *message = malloc(len + 2 + 1);
 
-        memcpy(args+len, string, 2);
+        memcpy(message, &len, 1);
+        memcpy(message + 1, &sum_check, 1);
+        memcpy(message + 2, args, len);
+        memcpy(args, message, len+2);
 
+        free(message);
+        
         return len+2;
 }

@@ -9,12 +9,13 @@
 
 /*
  * The main structure for terminal operating
- * Message template:   CMD_ID  CMD_ARGS    SUM   EOT
- * Message bytes:      (byte)(byte array)(byte)(0x04)
+ * Message template:    CMD_LENGTH      CMD_CHECKSUM    CMD_ID          CMD_ARGS
+ * Message bytes:       (byte)          (byte)          (byte)          (byte array)           
  */
 typedef struct {
         USART_TypeDef *dev;
-        int int_line;
+        int length;
+        uint8_t checksum;
         char *buffer;
         char *com_args;
         uint8_t *stm_dr_buff;
