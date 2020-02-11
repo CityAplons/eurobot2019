@@ -8,7 +8,6 @@
 #include "gpio_map.h"
 #include "terminal.h"
 #include "dev_map.h"
-#include "checksum.h"
 
 #include "FreeRTOS.h"
 #include "task.h"
@@ -22,7 +21,7 @@ static terminal_task_t * term_ctrl;
 static void terminal_hw_config()
 {
          /* Init terminal pins */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
 
         LL_GPIO_SetAFPin_8_15(TERM_USART_TX_PORT, TERM_USART_TX_PIN,
                              TERM_USART_PIN_AF);
@@ -90,7 +89,7 @@ static void terminal_hw_config()
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
 
          /* Init stm32f0 communication pins */
-        //LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
 
         LL_GPIO_SetPinMode(STM_DRIVER_USART_TX_PORT, STM_DRIVER_USART_TX_PIN,
                            LL_GPIO_MODE_ALTERNATE);
@@ -161,10 +160,8 @@ static void terminal_hw_config()
 static int term_request(terminal_task_t *term_t)
 {
         if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-                term_t->com_args = &(term_t->buffer[3]);
-                term_t->length = term_t->buffer[0];
-                term_t->checksum = term_t->buffer[1];
-                return (int)(term_t->buffer[2]);
+                term_t->com_args = &(term_t->buffer[1]);
+                return (int)(term_t->buffer[0]);
         }
         return 0;
 }
@@ -172,8 +169,6 @@ static int term_request(terminal_task_t *term_t)
 static void term_response(terminal_task_t *term_t, int resp_len)
 {
         int i = 0;
-
-        resp_len = sum_inject(term_t->com_args, resp_len);
 
         LL_USART_ClearFlag_TC(term_t->dev);
         while (resp_len--) {
@@ -208,13 +203,7 @@ void terminal_manager(void *arg)
                 if (!IS_COMMAND_VALID(command_code) ||
                     !commands_handlers[command_code])
                         continue;
-
-                if (sum_check(&(term_t.buffer[2]), term_t.checksum, term_t.length))
-                        resp_len = commands_handlers[command_code](term_t.com_args);
-                else {
-                        memcpy(term_t.com_args, "CF", 3);
-                        resp_len = 3;
-                }
+                resp_len = commands_handlers[command_code](term_t.com_args);
                 term_response(&term_t, resp_len);
         }
         return;

@@ -10,18 +10,16 @@
 #define STM_DRIVER_BUF_SIZE             256
 #define STM_DRIVER_STACK_DEPTH          1024
 
-#define MAX_DYN_COMMANDS                8
+#define MAX_DYN_COMMANDS                10
 #define BAR_ADC_SAMPLES_SIZE            20
 #define BAR_PACK_CHECK_TRESHOLD         45
 #define DEFAULT_DELAY                   200
 #define RELAXATION_TIME                 (float) 10
 #define CONVERT_COEF_MS                 (float) 436
-#define SET_PUMP_PLATFORM_DELAY         (uint32_t) 600
-#define GRAB_PACK_DELAY                 (uint32_t) 400
-#define RELEASER_THROW_DELAY            (uint32_t) 400
+#define RELEASER_DELAY                  (uint32_t) 600
 
-#define DYN_SPEEDS      0x0200, 0x0200, 0x0300, 0x03ff
-#define DYN_INIT_POS    0x015a, 0x020d, 0x01cc, 0x01eb
+#define DYN_SPEEDS      0x0200, 0x0200, 0x0200, 0x0200, 0x0200, 0x0200, 0x0200, 0x0200
+#define DYN_INIT_POS    0x0210, 0x0210, 0x0210, 0x0210, 0x0210, 0x0300, 0x0210, 0x00FF
 
 /*
  * Set dynamixel angle command
@@ -44,16 +42,9 @@ StaticTask_t manipulators_tb;
  */
 #define DYN_BUSY_POS                    (0U)
 #define DYN_BUSY                        (0x01 << DYN_BUSY_POS)
-#define BLOCK_PUMP_POS                  (1U)
-#define BLOCK_PUMP                      (0x01 << BLOCK_PUMP_POS)
-#define BLOCK_DYN_POS                   (2U)
+#define BLOCK_DYN_POS                   (1U)
 #define BLOCK_DYN                       (0x01 << BLOCK_DYN_POS)
-#define BLOCK_STEPPER_POS               (3U)
-#define BLOCK_STEPPER                   (0x01 << BLOCK_STEPPER_POS)
 
-/*
- * Manipulators flags
- */
 #define is_manip_flag_set(manip_ctrl, bit) \
         (manip_ctrl->flags & bit)
 
@@ -103,8 +94,6 @@ typedef struct {
         uint16_t dyn_pos[NUMBER_OF_DYNAMIXELS];
         uint16_t dyn_speeds[NUMBER_OF_DYNAMIXELS];
         dyn_ctrl_t sequence_cmd[MAX_DYN_COMMANDS];
-        uint8_t bar_check;
-        uint8_t bar_adc_samples[BAR_ADC_SAMPLES_SIZE];
         uint8_t stm_dr_buff[10];
         TaskHandle_t manip_notify;
 } manip_ctrl_t;

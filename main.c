@@ -11,7 +11,7 @@
 #include "terminal.h"
 #include "motor_kinematics.h"
 #include "odometry.h"
-#include "lib/manipulators.h"
+#include "manipulators.h"
 
 /**
   *   System Clock Configuration

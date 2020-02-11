@@ -37,8 +37,6 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
          * Enable gpio and timers clocking
          */
         LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);

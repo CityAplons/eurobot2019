@@ -8,7 +8,7 @@
 /*
  * Robot's movement time allowed in seconds
  */
-#define MOTOR_OPERATING_TIME           100
+#define MOTOR_OPERATING_TIME           99
 #define ROBOT_SESSION_COMPETITION       0
 #define ROBOT_SESSION_DEBUG             1
 #define ROBOT_SIDE_RIGHT                0
@@ -43,14 +43,16 @@ typedef struct {
 enum motor_kinem_status_flags {
         MK_PWM_CONTROL_BIT,
         MK_SPEED_CONTROL_BIT,
-        MK_STOP_MOTORS_BIT
+        MK_STOP_MOTORS_BIT,
+        MK_BLOCK_MOTORS_BIT
 };
 
 #define ENUM_FLAG(name) name = 1 << name##_BIT
 enum mk_flags {
         ENUM_FLAG(MK_PWM_CONTROL),
         ENUM_FLAG(MK_SPEED_CONTROL),
-        ENUM_FLAG(MK_STOP_MOTORS)
+        ENUM_FLAG(MK_STOP_MOTORS),
+        ENUM_FLAG(MK_BLOCK_MOTORS)
 };
 
 #define is_manip_flag_set(manip_ctrl, bit) \
@@ -88,14 +90,14 @@ StaticSemaphore_t mutex_buffer;
  */
 #define MK_MAX_ROT_SPEED 22.4399f
 #define MK_LIN_KIN_MATRIX \
-        -32.0750f,    18.5158f,    0.0f, \
-        0.0f,         37.0370f,    0.0f, \
-        32.0750f,     18.5158f,    0.0f
+         22.205779584216380f,    -12.820512820512825f,    0.0f, \
+        -22.205779584216380f,    -12.820512820512825f,    0.0f, \
+         0.0f,                    25.641025641025642f,    0.0f
 
 #define MK_ROT_KIN_MATRIX \
-        0.0f,   0.0f,    3.67f,  \
-        0.0f,   0.0f,   -3.67f,  \
-        0.0f,   0.0f,    3.67f
+        0.0f,   0.0f,    2.717948717948718f,  \
+        0.0f,   0.0f,    2.717948717948718f,  \
+        0.0f,   0.0f,    2.717948717948718f
 
 #define MK_SPEED2PWM_A \
         0.03565f, \

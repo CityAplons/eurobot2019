@@ -1,4 +1,5 @@
 #include "terminal_cmds.h"
+#include "string.h"
 
 #include "bootloader.h"
 
@@ -32,4 +33,11 @@ int cmd_echo_handler(char *args)
         (void) args;
 
         return 4;
+}
+
+int cmd_fake_data(char *args)
+{
+        unsigned char arr[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+        memcpy(args, arr, 9);
+        return 9;
 }
