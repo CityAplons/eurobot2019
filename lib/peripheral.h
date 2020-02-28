@@ -82,6 +82,36 @@
 #define STM_DRIVER_DMA_SRC_ADDR                 (uint32_t)&(STM_DRIVER_USART)->DR
 
 /*
+ * Stepper motor timer
+ * APB1_CLK = 84000000, T = 5 ms
+ */
+#define STEP_TIM                                TIM9
+#define STEP_TIM_MODE                           LL_TIM_COUNTERMODE_UP
+#define STEP_TIM_ARR                            500
+#define STEP_TIM_PSC                            839
+#define STEP_TIM_IRQN                           TIM1_BRK_TIM9_IRQn
+#define STEP_TIM_IRQN_PRIORITY                  (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1)
+
+/*
+#define LED_TIM                                 TIM5
+#define LED_TIM_OC_CHANNEL                      LL_TIM_CHANNEL_CH2
+#define LED_IRQN                                TIM5_IRQn
+#define LED_IRQN_PRIORITY                       (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 2)
+#define LED_TIM_PSC                             4199
+#define LED_TIM_ARR                             399
+#define LED_TIM_CCR_INIT                        200
+*/
+
+/*
+ * Chaos stick PWM timer
+ * APB1_CLK = 42000000, CLK = 84000000, TIM_ARR = 42000, freq_pwm = 1KHz
+ */
+#define STICK_TIM                               TIM12
+#define STICK_TIM_ARR                           1999
+#define STICK_TIM_PSC                           839
+#define STEP_TIM_CCR_INIT                       145
+
+/*
  * Motor kinematics timer configuration
  * APB1_CLK = 42000000, TIM_ARR = 42000, freq_pwm = 1KHz
  */
@@ -127,7 +157,7 @@
 
 /*
  * Robot operating timer
- * APB1_CLK = 84000000, TIM_PCS = 41999, TIM_ARR = 1999, freq = 1Hz
+ * APB1_CLK*2 = 84000000, TIM_PCS = 41999, TIM_ARR = 1999, freq = 1Hz
  */
 #define MOTOR_OPERATING_TIM                     TIM7
 #define MOTOR_OPERATING_TIM_PSC                 41999
@@ -139,9 +169,9 @@
  * Exti setup for strategy choose
  */
 #define MOTOR_STRATEGY_SYS_EXTI_PORT            LL_SYSCFG_EXTI_PORTE
-#define MOTOR_STRATEGY_SYS_EXTI_LINE            LL_SYSCFG_EXTI_LINE1
-#define MOTOR_STRATEGY_EXTI_LINE                LL_EXTI_LINE_1
-#define MOTOR_STRATEGY_IRQN                     EXTI1_IRQn
+#define MOTOR_STRATEGY_SYS_EXTI_LINE            LL_SYSCFG_EXTI_LINE6
+#define MOTOR_STRATEGY_EXTI_LINE                LL_EXTI_LINE_6
+#define MOTOR_STRATEGY_IRQN                     EXTI9_5_IRQn
 #define MOTOR_STRATEGY_IRQN_PRIORITY            (configLIBRARY_MAX_SYSCALL_INTERRUPT_PRIORITY + 1)
 
 #endif //_H_PERIPHERAL_

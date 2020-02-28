@@ -12,6 +12,7 @@
 #define TERM_USART_RX_PORT                  GPIOC
 #define TERM_USART_RX_PIN                   LL_GPIO_PIN_11
 #define TERM_USART_PIN_AF                   LL_GPIO_AF_7
+//TODO changed on LL_GPIO_OUTPUT_OPENDRAIN with Odroid communication
 #define TERM_USART_OUTPUT_TYPE              LL_GPIO_OUTPUT_PUSHPULL
 
 /*
@@ -22,6 +23,13 @@
 #define STM_DRIVER_USART_RX_PORT            GPIOB
 #define STM_DRIVER_USART_RX_PIN             LL_GPIO_PIN_7
 #define STM_DRIVER_USART_PIN_AF             LL_GPIO_AF_7
+
+/*
+ * Dynamixel power control
+ */
+#define DYNAMIXEL_PWR                       GPIOB
+#define DYNAMIXEL_PWR_PIN                   LL_GPIO_PIN_12
+#define DYNAMIXEL_PWR_OUTPUT_TYPE           LL_GPIO_OUTPUT_PUSHPULL
 
 /*
  * Motor kinematics pinout
@@ -42,7 +50,7 @@
 #define MOTOR_CH3_DIR_PORT                  GPIOA
 #define MOTOR_CH3_DIR_PIN                   LL_GPIO_PIN_10
 #define MOTOR_CH4_DIR_PORT                  GPIOA
-#define MOTOR_CH4_DIR_PIN                   LL_GPIO_PIN_11
+#define MOTOR_CH4_DIR_PIN                   LL_GPIO_PIN_11  
 
 /*
  * Odometry pinout
@@ -67,6 +75,28 @@
 #define ENCODER_3_PIN_AF                    LL_GPIO_AF_1
 
 /*
+ * Stepper motor pins
+ */
+#define STEP_MOTOR_PORT                     GPIOE  
+#define STEP_MOTOR_P1                       LL_GPIO_PIN_8
+#define STEP_MOTOR_P2                       LL_GPIO_PIN_9
+#define STEP_MOTOR_P3                       LL_GPIO_PIN_10
+#define STEP_MOTOR_P4                       LL_GPIO_PIN_5
+
+/*
+ * Limit switch pin for step motor calibration
+ */
+#define STEP_LIMIT_SWITCH_PORT              GPIOE
+#define STEP_LIMIT_SWITCH_PIN               LL_GPIO_PIN_7
+
+/*
+ * Servo motor pinout
+ */
+#define STICK_PORT                          GPIOB
+#define STICK_PIN                           LL_GPIO_PIN_14
+#define STICK_PIN_AF                        LL_GPIO_AF_9
+
+/*
  * Starting cord pinout
  */
 #define MOTOR_CORD_PORT                     GPIOE
@@ -76,12 +106,22 @@
  * Strategy choose button pinout
  */
 #define MOTOR_STRATEGY_PORT                 GPIOE
-#define MOTOR_STRATEGY_PIN                  LL_GPIO_PIN_1
+#define MOTOR_STRATEGY_PIN                  LL_GPIO_PIN_6
 
 /*
  * Side switcher
  */
 #define MOTOR_SIDE_SW_PORT                  GPIOE
 #define MOTOR_SIDE_SW_PIN                   LL_GPIO_PIN_2
+
+/*
+ * Gripper status pin
+ */
+#define GRP_PORT                            GPIOE
+#define GRP_PIN_1                           LL_GPIO_PIN_11
+#define GRP_PIN_2                           LL_GPIO_PIN_12
+#define GRP_PIN_3                           LL_GPIO_PIN_13
+#define GRP_PIN_4                           LL_GPIO_PIN_14
+#define GRP_PIN_5                           LL_GPIO_PIN_15
 
 #endif

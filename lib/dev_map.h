@@ -3,5 +3,6 @@
 
 #define NUMBER_OF_DYNAMIXELS            8
 #define NUMBER_OF_PROX_SENSORS          9
+#define NUMBER_OF_STEP_MOTORS           1
 
 #endif //_DEV_MAP_H_

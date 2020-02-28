@@ -228,7 +228,8 @@ static void mk_hw_config()
         LL_GPIO_SetPinMode(MOTOR_CORD_PORT, MOTOR_CORD_PIN, LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(MOTOR_CORD_PORT, MOTOR_CORD_PIN, LL_GPIO_PULL_NO);
 
-        /* Setting strategy button */
+        /* Setting strategy button */   
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_GPIO_SetPinMode(MOTOR_STRATEGY_PORT, MOTOR_STRATEGY_PIN,
                            LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(MOTOR_STRATEGY_PORT, MOTOR_STRATEGY_PIN,
@@ -238,7 +239,7 @@ static void mk_hw_config()
         LL_SYSCFG_SetEXTISource(MOTOR_STRATEGY_SYS_EXTI_PORT,
                                 MOTOR_STRATEGY_SYS_EXTI_LINE);
         LL_EXTI_EnableIT_0_31(MOTOR_STRATEGY_EXTI_LINE);
-        // LL_EXTI_EnableRisingTrig_0_31(MOTOR_STRATEGY_EXTI_LINE);
+        LL_EXTI_EnableRisingTrig_0_31(MOTOR_STRATEGY_EXTI_LINE);
         LL_EXTI_EnableFallingTrig_0_31(MOTOR_STRATEGY_EXTI_LINE);
         NVIC_SetPriority(MOTOR_STRATEGY_IRQN, MOTOR_STRATEGY_IRQN_PRIORITY);
         NVIC_EnableIRQ(MOTOR_STRATEGY_IRQN);
@@ -283,12 +284,6 @@ static void mk_set_stop_motors_ctrl(motors_ctrl_t *mk_ctrl)
         return;
 }
 
-static void mk_set_block_motors_ctrl(motors_ctrl_t *mk_ctrl)
-{
-        mk_ctrl->status |= MK_BLOCK_MOTORS;
-        return;
-}
-
 static void mk_clr_stop_motors_ctrl(motors_ctrl_t *mk_ctrl)
 {
         mk_ctrl->status &= ~(MK_STOP_MOTORS);
@@ -313,7 +308,7 @@ static void turn_off_all_motors(void)
         /*
          * Turn off maxons
          */
-        mk_set_block_motors_ctrl(mk_ctrl);
+        mk_set_stop_motors_ctrl(mk_ctrl);
         mk_set_pwm(stop_motors);
         /*
          * Turn off manipulators
@@ -361,24 +356,17 @@ void motor_kinematics(void *arg)
         /*
          * Stop motors and wait for starting cord
          */
-        mk_set_stop_motors_ctrl(mk_ctrl);
-
+        mk_set_pwm(mk_ctrl->pwm_motors);
         while (1) {
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
                 xSemaphoreTake(mk_ctrl->lock, portMAX_DELAY);
                 /*
-                 * If motors are blocked don't do anything
-                 */
-                if(mk_ctrl->status & MK_BLOCK_MOTORS) {
-                    continue;
-                }
-                /*
                  * If one stopped motors immediately reset all pwm values
                  */
                 if (mk_ctrl->status & MK_STOP_MOTORS) {
-                        mk_ctrl->pwm_motors[0] = 0.1f;
-                        mk_ctrl->pwm_motors[1] = 0.1f;
-                        mk_ctrl->pwm_motors[2] = 0.1f;
+                        mk_ctrl->pwm_motors[0] = 0.0f;
+                        mk_ctrl->pwm_motors[1] = 0.0f;
+                        mk_ctrl->pwm_motors[2] = 0.0f;
                 }
                 /*
                  * If motors are allowed to be running and control
@@ -539,6 +527,9 @@ void TIM7_IRQHandler(void)
                 if (seconds_from_start >= MOTOR_OPERATING_TIME &&
                     mk_ctrl->session != ROBOT_SESSION_DEBUG) {
                         turn_off_all_motors();
+                } else if (seconds_from_start >= 95 &&
+                    mk_ctrl->session != ROBOT_SESSION_DEBUG ) {
+                        manipulators_rise_flag();
                 }
         }
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -553,7 +544,7 @@ void EXTI9_5_IRQHandler(void)
         uint16_t current_tick = xTaskGetTickCountFromISR();
         if (current_tick > mk_ctrl->strategy_update_time + 200) {
                 mk_ctrl->strategy_num = (mk_ctrl->strategy_num + 1) % \
-                                         NUMBER_OF_STRATEGIES;
+                                NUMBER_OF_STRATEGIES;
         }
         mk_ctrl->strategy_update_time = current_tick;
         LL_EXTI_ClearFlag_0_31(MOTOR_STRATEGY_EXTI_LINE);

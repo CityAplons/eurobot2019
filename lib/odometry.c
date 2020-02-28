@@ -37,6 +37,8 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
          * Enable gpio and timers clocking
          */
         LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM1);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
@@ -54,7 +56,7 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
                                  LL_GPIO_OUTPUT_PUSHPULL);
         LL_GPIO_SetPinMode(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
                            LL_GPIO_MODE_ALTERNATE);
-        LL_GPIO_SetAFPin_8_15(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
+        LL_GPIO_SetAFPin_0_7(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
                               ENCODER_1_PIN_AF);
         LL_GPIO_SetPinOutputType(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
                                  LL_GPIO_OUTPUT_PUSHPULL);
