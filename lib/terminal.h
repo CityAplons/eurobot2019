@@ -7,16 +7,10 @@
 #include "task.h"
 #include "terminal_cmds.h"
 
-/*
- * The main structure for terminal operating
- */
 typedef struct {
         USART_TypeDef *dev;
-        int int_line;
-        void (*uart2dma_init)(char *);
         char *buffer;
         char *com_args;
-        char *com_resp;
         uint8_t *stm_dr_buff;
         TaskHandle_t xTaskToNotify;
 } terminal_task_t;

@@ -8,20 +8,26 @@
 #include "dev_map.h"
 
 #define STM_DRIVER_BUF_SIZE             256
-#define STM_DRIVER_STACK_DEPTH          1024
+#define STM_DRIVER_STACK_DEPTH          1280
+
+#define MAX_COMMANDS                    8
 
 #define MAX_DYN_COMMANDS                8
-#define BAR_ADC_SAMPLES_SIZE            20
+#define BAR_ADC_CHANNELS                3
+#define BAR_ADC_WINDOW_SIZE             5
 #define BAR_PACK_CHECK_TRESHOLD         45
 #define DEFAULT_DELAY                   200
-#define RELAXATION_TIME                 (float) 10
+#define RELAXATION_TIME                 (float) 30
+#define LAST_CMD_DELAY                  (float) 350
 #define CONVERT_COEF_MS                 (float) 436
-#define SET_PUMP_PLATFORM_DELAY         (uint32_t) 600
-#define GRAB_PACK_DELAY                 (uint32_t) 400
-#define RELEASER_THROW_DELAY            (uint32_t) 400
+#define GRABBER_THROW_DELAY             200
+#define SET_PUMP_PLATFORM_DELAY         200
+#define SET_PUMP_GROUND_DELAY           200
 
-#define DYN_SPEEDS      0x0200, 0x0200, 0x0300, 0x03ff
-#define DYN_INIT_POS    0x015a, 0x020d, 0x01cc, 0x01eb
+
+/* 180 degrees down 450 tick, 270 degrees up 800 tick. 1st Dynamixel - id 1 */
+#define DYN_SPEEDS      0x0200, 0x0200, 0x0200
+#define DYN_INIT_POS    0x0005, 0x0005, 0x0005
 
 /*
  * Set dynamixel angle command
@@ -32,6 +38,7 @@
         (manip_ctrl)->dyn_ctrl[(num)].cmd_buff[2] = (uint8_t) ((angle) & 0xff); \
         (manip_ctrl)->dyn_ctrl[(num)].cmd_buff[3] = (uint8_t) (((angle) >> 8) \
                                                              & 0xff);
+
 
 /*
  * Memory for terminal task
@@ -48,12 +55,7 @@ StaticTask_t manipulators_tb;
 #define BLOCK_PUMP                      (0x01 << BLOCK_PUMP_POS)
 #define BLOCK_DYN_POS                   (2U)
 #define BLOCK_DYN                       (0x01 << BLOCK_DYN_POS)
-#define BLOCK_STEPPER_POS               (3U)
-#define BLOCK_STEPPER                   (0x01 << BLOCK_STEPPER_POS)
 
-/*
- * Manipulators flags
- */
 #define is_manip_flag_set(manip_ctrl, bit) \
         (manip_ctrl->flags & bit)
 
@@ -103,8 +105,9 @@ typedef struct {
         uint16_t dyn_pos[NUMBER_OF_DYNAMIXELS];
         uint16_t dyn_speeds[NUMBER_OF_DYNAMIXELS];
         dyn_ctrl_t sequence_cmd[MAX_DYN_COMMANDS];
-        uint8_t bar_check;
-        uint8_t bar_adc_samples[BAR_ADC_SAMPLES_SIZE];
+        uint8_t *bar_adc_channels;
+        uint8_t bar_adc_samples[BAR_ADC_CHANNELS][BAR_ADC_WINDOW_SIZE];
+        uint8_t bar_adc_sample_count;
         uint8_t stm_dr_buff[10];
         TaskHandle_t manip_notify;
 } manip_ctrl_t;

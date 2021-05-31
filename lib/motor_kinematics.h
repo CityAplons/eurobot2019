@@ -15,6 +15,10 @@
 #define ROBOT_SIDE_LEFT                 1
 #define NUMBER_OF_STRATEGIES            3
 
+#define RAMP            10000                         // RPM/S
+#define MAX_RPM         9000                          // RPM
+#define M_STEP          (RAMP / 100) * 0.8 / MAX_RPM; // (RAMP * 10 ms [TIM14 period] / 1000 ms) * 0.8 [80% of linear area] / MAX_RPM
+
 /*
  * SET_PWM command args structure
  */
@@ -69,6 +73,8 @@ typedef struct {
         TaskHandle_t mk_notify;
         SemaphoreHandle_t lock;
         float pwm_motors[3];
+        float prev_pwm_motors[3]; //For tests
+        TickType_t prev_ticks;
 } motors_ctrl_t;
 
 /*
@@ -88,14 +94,14 @@ StaticSemaphore_t mutex_buffer;
  */
 #define MK_MAX_ROT_SPEED 22.4399f
 #define MK_LIN_KIN_MATRIX \
-        -32.0750f,    18.5158f,    0.0f, \
-        0.0f,         37.0370f,    0.0f, \
-        32.0750f,     18.5158f,    0.0f
+         30.929478706587098f,    17.857142857142861f,    0.0f, \
+        -30.929478706587098f,    17.857142857142861f,    0.0f, \
+         0.0f,                  -35.714285714285715f,    0.0f
 
 #define MK_ROT_KIN_MATRIX \
-        0.0f,   0.0f,    3.67f,  \
-        0.0f,   0.0f,   -3.67f,  \
-        0.0f,   0.0f,    3.67f
+        0.0f,   0.0f,     3.721428571428572f,  \
+        0.0f,   0.0f,     3.721428571428572f,  \
+        0.0f,   0.0f,     3.7214285714285728f
 
 #define MK_SPEED2PWM_A \
         0.03565f, \

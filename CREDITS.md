@@ -1,5 +1,5 @@
 Credits
-=======
+======
 
    - Eurobot 2019
      * [Edgar Kaziakhmedov](https://github.com/edosedgar)

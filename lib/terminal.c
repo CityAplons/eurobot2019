@@ -21,9 +21,9 @@ static terminal_task_t * term_ctrl;
 static void terminal_hw_config()
 {
          /* Init terminal pins */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
 
-        LL_GPIO_SetAFPin_0_7(TERM_USART_TX_PORT, TERM_USART_TX_PIN,
+        LL_GPIO_SetAFPin_8_15(TERM_USART_TX_PORT, TERM_USART_TX_PIN,
                              TERM_USART_PIN_AF);
         LL_GPIO_SetPinMode(TERM_USART_TX_PORT, TERM_USART_TX_PIN,
                            LL_GPIO_MODE_ALTERNATE);
@@ -34,7 +34,7 @@ static void terminal_hw_config()
         LL_GPIO_SetPinSpeed(TERM_USART_TX_PORT, TERM_USART_TX_PIN,
                             LL_GPIO_SPEED_FREQ_HIGH);
 
-        LL_GPIO_SetAFPin_0_7(TERM_USART_RX_PORT, TERM_USART_RX_PIN,
+        LL_GPIO_SetAFPin_8_15(TERM_USART_RX_PORT, TERM_USART_RX_PIN,
                              TERM_USART_PIN_AF);
         LL_GPIO_SetPinMode(TERM_USART_RX_PORT, TERM_USART_RX_PIN,
                            LL_GPIO_MODE_ALTERNATE);
@@ -46,8 +46,8 @@ static void terminal_hw_config()
                             LL_GPIO_SPEED_FREQ_HIGH);
 
         /* Enable clocking on USART and DMA */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
-        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
+        LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
 
         /* UART configuration */
         LL_USART_SetTransferDirection(TERM_USART,
@@ -85,15 +85,15 @@ static void terminal_hw_config()
         NVIC_EnableIRQ(TERM_DMA_STREAM_IRQN);
 
         /* Enable clocking on USART and DMA */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA1);
-        LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_USART3);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_USART1);
 
          /* Init stm32f0 communication pins */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
 
         LL_GPIO_SetPinMode(STM_DRIVER_USART_TX_PORT, STM_DRIVER_USART_TX_PIN,
                            LL_GPIO_MODE_ALTERNATE);
-        LL_GPIO_SetAFPin_8_15(STM_DRIVER_USART_TX_PORT, STM_DRIVER_USART_TX_PIN,
+        LL_GPIO_SetAFPin_0_7(STM_DRIVER_USART_TX_PORT, STM_DRIVER_USART_TX_PIN,
                              STM_DRIVER_USART_PIN_AF);
         LL_GPIO_SetPinOutputType(STM_DRIVER_USART_TX_PORT,
                                  STM_DRIVER_USART_TX_PIN,
@@ -105,7 +105,7 @@ static void terminal_hw_config()
 
         LL_GPIO_SetPinMode(STM_DRIVER_USART_RX_PORT, STM_DRIVER_USART_RX_PIN,
                            LL_GPIO_MODE_ALTERNATE);
-        LL_GPIO_SetAFPin_8_15(STM_DRIVER_USART_RX_PORT, STM_DRIVER_USART_RX_PIN,
+        LL_GPIO_SetAFPin_0_7(STM_DRIVER_USART_RX_PORT, STM_DRIVER_USART_RX_PIN,
                              STM_DRIVER_USART_PIN_AF);
         LL_GPIO_SetPinOutputType(STM_DRIVER_USART_RX_PORT,
                                  STM_DRIVER_USART_RX_PIN,
@@ -193,12 +193,12 @@ void terminal_manager(void *arg)
         term_t.buffer = malloc(TERM_CH_BUF_SIZE);
         term_t.com_args = malloc(TERM_ARGS_BUF_SIZE);
         term_t.stm_dr_buff = malloc(TERM_STM_DR_BUF_SIZE);
-        term_t.com_resp = term_t.com_args;
         term_t.xTaskToNotify = xTaskGetCurrentTaskHandle();
         term_ctrl = &term_t;
         terminal_hw_config();
 
         while (1) {
+
                 command_code = term_request(&term_t);
                 if (!IS_COMMAND_VALID(command_code) ||
                     !commands_handlers[command_code])
@@ -221,7 +221,7 @@ int cmd_get_col_av_data(char *args)
 /*
  * Hardware interrupts
  */
-void USART1_IRQHandler(void)
+void USART3_IRQHandler(void)
 {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -230,13 +230,13 @@ void USART1_IRQHandler(void)
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-void DMA2_Stream2_IRQHandler(void)
+void DMA1_Stream1_IRQHandler(void)
 {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        if (LL_DMA_IsActiveFlag_TC2(TERM_DMA)) {
-                LL_DMA_ClearFlag_TC2(TERM_DMA);
-                LL_DMA_ClearFlag_HT2(TERM_DMA);
+        if (LL_DMA_IsActiveFlag_TC1(TERM_DMA)) {
+                LL_DMA_ClearFlag_TC1(TERM_DMA);
+                LL_DMA_ClearFlag_HT1(TERM_DMA);
                 LL_DMA_EnableStream(TERM_DMA, TERM_DMA_STREAM);
                 vTaskNotifyGiveFromISR(term_ctrl->xTaskToNotify,
                                        &xHigherPriorityTaskWoken);
@@ -244,7 +244,7 @@ void DMA2_Stream2_IRQHandler(void)
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-void USART3_IRQHandler(void)
+void USART1_IRQHandler(void)
 {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
@@ -253,13 +253,13 @@ void USART3_IRQHandler(void)
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
 }
 
-void DMA1_Stream1_IRQHandler(void)
+void DMA2_Stream2_IRQHandler(void)
 {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 
-        if (LL_DMA_IsActiveFlag_TC1(STM_DRIVER_DMA)) {
-                LL_DMA_ClearFlag_TC1(STM_DRIVER_DMA);
-                LL_DMA_ClearFlag_HT1(STM_DRIVER_DMA);
+        if (LL_DMA_IsActiveFlag_TC2(STM_DRIVER_DMA)) {
+                LL_DMA_ClearFlag_TC2(STM_DRIVER_DMA);
+                LL_DMA_ClearFlag_HT2(STM_DRIVER_DMA);
                 LL_DMA_EnableStream(STM_DRIVER_DMA, STM_DRIVER_DMA_STREAM);
         }
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);

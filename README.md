@@ -36,6 +36,8 @@ sudo apt-get install gcc-arm-embedded
 ```
 #### Debugger
 
+### Only for Ubuntu/Debian version below 18.04
+
 Bare metal GNU debugger for embedded ARM chips using Cortex-M0/M0+/M3/M4,
 Cortex-R4/R5/R7 and Cortex-A* processors. GDB is a source-level debugger,
 capable of breaking programs at any specific line, displaying variable values,
@@ -66,22 +68,6 @@ arm-none-eabi-gcc         arm-none-eabi-ld
 arm-none-eabi-gcc-7.3.1   arm-none-eabi-ld.bfd
 ```
 
-###  OpenOCD
-
-OpenOCD is a free on chip debug solution for targets based on ARM. It is a server
-which opens a GDB remote target port and a Telnet port.
-
-In order to install OpenOCD, the code necesary for instalation could be found
-in [OpenOCD](https://sourceforge.net/projects/openocd/files/openocd/0.10.0/).
-
-The following commands generate and install the program.
-
-```
- ./configure [options]
- make
- sudo make install
-```
-
 ### Installation st-link
 
 Stlink package is the software for the ST-Link programmer that works with many
@@ -95,10 +81,17 @@ First, clone the repository st-link.
 git clone https://github.com/texane/stlink.git
 ```
 
-Every thing can be built from the top of directory.
+Everything can be built from the top of directory.
+To install st-link you will need:
++ libusb-1.0-0
++ libusb-1.0-0-dev
++ cmake
+
 
 ```
 cd stlink
-make
-cd build/Release && make install DESTDIR=_install
+make release
+cd build/Release
+sudo make install
+sudo ldconfig
 ```

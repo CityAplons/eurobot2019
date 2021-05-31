@@ -64,8 +64,8 @@ static void rcc_config()
 
 static void gpio_config(void)
 {
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
-        LL_GPIO_SetPinMode(GPIOD, LL_GPIO_PIN_13, LL_GPIO_MODE_OUTPUT);
+        //LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
+        //LL_GPIO_SetPinMode(GPIOD, LL_GPIO_PIN_13, LL_GPIO_MODE_OUTPUT);
         return;
 }
 
@@ -77,7 +77,7 @@ int main() {
         xTaskCreateStatic(terminal_manager, "TERM_MAN", TERM_MAN_STACK_DEPTH,
                           NULL, 3, terminal_manager_ts, &terminal_manager_tb);
         xTaskCreateStatic(motor_kinematics, "MOTOR_KIN", MOTOR_KIN_STACK_DEPTH,
-                          NULL, 2, motor_kinematics_ts, &motor_kinematics_tb);
+                         NULL, 2, motor_kinematics_ts, &motor_kinematics_tb);
         xTaskCreateStatic(odometry, "ODOMETRY", ODOMETRY_STACK_DEPTH,
                           NULL, 2, odometry_ts, &odometry_tb);
         xTaskCreateStatic(manipulators_manager, "MANIPULATORS", STM_DRIVER_STACK_DEPTH,
