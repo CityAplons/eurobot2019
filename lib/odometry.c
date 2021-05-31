@@ -43,6 +43,11 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM2);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM3);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM6);
+//Unused pins of motor4
+        LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_2,
+                           LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinMode(GPIOA, LL_GPIO_PIN_3,
+                           LL_GPIO_MODE_INPUT);
 
         /*
          * Initialization encoders gpio
@@ -50,16 +55,16 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
          */
         LL_GPIO_SetPinMode(ENCODER_1_CHA_PORT, ENCODER_1_CHA_PIN,
                            LL_GPIO_MODE_ALTERNATE);
+        LL_GPIO_SetPinPull(ENCODER_1_CHA_PORT, ENCODER_1_CHA_PIN,
+                           LL_GPIO_PULL_UP);
         LL_GPIO_SetAFPin_0_7(ENCODER_1_CHA_PORT, ENCODER_1_CHA_PIN,
-                             ENCODER_1_PIN_AF);
-        LL_GPIO_SetPinOutputType(ENCODER_1_CHA_PORT, ENCODER_1_CHA_PIN,
-                                 LL_GPIO_OUTPUT_PUSHPULL);
+                           ENCODER_1_PIN_AF);
         LL_GPIO_SetPinMode(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
-                           LL_GPIO_MODE_ALTERNATE);
-        LL_GPIO_SetAFPin_8_15(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
+                           LL_GPIO_MODE_ALTERNATE); 
+        LL_GPIO_SetAFPin_0_7(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
                               ENCODER_1_PIN_AF);
-        LL_GPIO_SetPinOutputType(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
-                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(ENCODER_1_CHB_PORT, ENCODER_1_CHB_PIN,
+                           LL_GPIO_PULL_UP);
 
         /*
          * Initialization second encoder gpios
@@ -68,14 +73,14 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
                            LL_GPIO_MODE_ALTERNATE);
         LL_GPIO_SetAFPin_0_7(ENCODER_2_CHA_PORT, ENCODER_2_CHA_PIN,
                              ENCODER_2_PIN_AF);
-        LL_GPIO_SetPinOutputType(ENCODER_2_CHA_PORT, ENCODER_2_CHA_PIN,
-                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(ENCODER_2_CHA_PORT, ENCODER_2_CHA_PIN,
+                           LL_GPIO_PULL_UP);
         LL_GPIO_SetPinMode(ENCODER_2_CHB_PORT, ENCODER_2_CHB_PIN,
-                           LL_GPIO_MODE_ALTERNATE);
+                           LL_GPIO_MODE_ALTERNATE);   
+        LL_GPIO_SetPinPull(ENCODER_2_CHB_PORT, ENCODER_2_CHB_PIN,
+                           LL_GPIO_PULL_UP);
         LL_GPIO_SetAFPin_0_7(ENCODER_2_CHB_PORT, ENCODER_2_CHB_PIN,
                              ENCODER_2_PIN_AF);
-        LL_GPIO_SetPinOutputType(ENCODER_2_CHB_PORT, ENCODER_2_CHB_PIN,
-                                 LL_GPIO_OUTPUT_PUSHPULL);
 
         /*
          * Initialization third encoder gpios
@@ -84,59 +89,75 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
                            LL_GPIO_MODE_ALTERNATE);
         LL_GPIO_SetAFPin_8_15(ENCODER_3_CHA_PORT, ENCODER_3_CHA_PIN,
                               ENCODER_3_PIN_AF);
-        LL_GPIO_SetPinOutputType(ENCODER_3_CHA_PORT, ENCODER_3_CHA_PIN,
-                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(ENCODER_3_CHA_PORT, ENCODER_3_CHA_PIN,
+                           LL_GPIO_PULL_NO);
         LL_GPIO_SetPinMode(ENCODER_3_CHB_PORT, ENCODER_3_CHB_PIN,
                            LL_GPIO_MODE_ALTERNATE);
         LL_GPIO_SetAFPin_8_15(ENCODER_3_CHB_PORT, ENCODER_3_CHB_PIN,
                               ENCODER_3_PIN_AF);
-        LL_GPIO_SetPinOutputType(ENCODER_3_CHB_PORT, ENCODER_3_CHB_PIN,
-                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(ENCODER_3_CHB_PORT, ENCODER_3_CHB_PIN,
+                           LL_GPIO_PULL_NO);
 
         /*
          * Initialization encoder timers
          * First encoder mode timer
          */
-        LL_TIM_CC_EnableChannel(ENCODER_1_TIM_MODULE,
-                                LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2);
-        LL_TIM_IC_Config(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH1,
-                         LL_TIM_ACTIVEINPUT_DIRECTTI);
-        LL_TIM_IC_Config(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH2,
-                         LL_TIM_ACTIVEINPUT_DIRECTTI |
-                         LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_SetEncoderMode(ENCODER_1_TIM_MODULE, LL_TIM_ENCODERMODE_X4_TI12);
+        LL_TIM_IC_SetActiveInput(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_DIRECTTI);
+        LL_TIM_IC_SetPrescaler(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
+        LL_TIM_IC_SetFilter(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
+        LL_TIM_IC_SetPolarity(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_IC_SetActiveInput(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_ACTIVEINPUT_DIRECTTI);
+        LL_TIM_IC_SetPrescaler(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
+        LL_TIM_IC_SetFilter(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_IC_FILTER_FDIV1);
+        LL_TIM_IC_SetPolarity(ENCODER_1_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_SetCounterMode(ENCODER_1_TIM_MODULE, LL_TIM_COUNTERMODE_UP);
         LL_TIM_SetAutoReload(ENCODER_1_TIM_MODULE, ENCODER_TIM_ARR);
-        LL_TIM_SetEncoderMode(ENCODER_1_TIM_MODULE,
-                              LL_TIM_ENCODERMODE_X4_TI12);
+        LL_TIM_SetClockDivision(ENCODER_1_TIM_MODULE, LL_TIM_CLOCKDIVISION_DIV1);
+        LL_TIM_DisableARRPreload(ENCODER_1_TIM_MODULE);
+        LL_TIM_SetTriggerOutput(ENCODER_1_TIM_MODULE, LL_TIM_TRGO_RESET);
+        LL_TIM_DisableMasterSlaveMode(ENCODER_1_TIM_MODULE);
         *(odom_ctrl->p_enc_ticks[0]) = ENCODER_TIM_CNT_INITIAL_VALUE;
+
 
         /*
          * Second encoder mode timer
          */
-        LL_TIM_CC_EnableChannel(ENCODER_2_TIM_MODULE,
-                                LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2);
-        LL_TIM_IC_Config(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH1,
-                         LL_TIM_ACTIVEINPUT_DIRECTTI);
-        LL_TIM_IC_Config(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH2,
-                         LL_TIM_ACTIVEINPUT_DIRECTTI |
-                         LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_SetEncoderMode(ENCODER_2_TIM_MODULE, LL_TIM_ENCODERMODE_X4_TI12);
+        LL_TIM_IC_SetActiveInput(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_DIRECTTI);
+        LL_TIM_IC_SetPrescaler(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
+        LL_TIM_IC_SetFilter(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
+        LL_TIM_IC_SetPolarity(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_IC_SetActiveInput(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_ACTIVEINPUT_DIRECTTI);
+        LL_TIM_IC_SetPrescaler(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
+        LL_TIM_IC_SetFilter(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_IC_FILTER_FDIV1);
+        LL_TIM_IC_SetPolarity(ENCODER_2_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_SetCounterMode(ENCODER_2_TIM_MODULE, LL_TIM_COUNTERMODE_UP);
         LL_TIM_SetAutoReload(ENCODER_2_TIM_MODULE, ENCODER_TIM_ARR);
-        LL_TIM_SetEncoderMode(ENCODER_2_TIM_MODULE,
-                              LL_TIM_ENCODERMODE_X4_TI12);
+        LL_TIM_SetClockDivision(ENCODER_2_TIM_MODULE, LL_TIM_CLOCKDIVISION_DIV1);
+        LL_TIM_DisableARRPreload(ENCODER_2_TIM_MODULE);
+        LL_TIM_SetTriggerOutput(ENCODER_2_TIM_MODULE, LL_TIM_TRGO_RESET);
+        LL_TIM_DisableMasterSlaveMode(ENCODER_2_TIM_MODULE);
         *(odom_ctrl->p_enc_ticks[1]) = ENCODER_TIM_CNT_INITIAL_VALUE;
 
         /*
          * Third encoder mode timer
          */
-        LL_TIM_CC_EnableChannel(ENCODER_3_TIM_MODULE,
-                                LL_TIM_CHANNEL_CH1 | LL_TIM_CHANNEL_CH2);
-        LL_TIM_IC_Config(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH1,
-                         LL_TIM_ACTIVEINPUT_DIRECTTI);
-        LL_TIM_IC_Config(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH2,
-                         LL_TIM_ACTIVEINPUT_DIRECTTI |
-                         LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_SetEncoderMode(ENCODER_3_TIM_MODULE, LL_TIM_ENCODERMODE_X4_TI12);
+        LL_TIM_IC_SetActiveInput(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_ACTIVEINPUT_DIRECTTI);
+        LL_TIM_IC_SetPrescaler(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_ICPSC_DIV1);
+        LL_TIM_IC_SetFilter(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_IC_FILTER_FDIV1);
+        LL_TIM_IC_SetPolarity(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH1, LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_IC_SetActiveInput(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_ACTIVEINPUT_DIRECTTI);
+        LL_TIM_IC_SetPrescaler(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_ICPSC_DIV1);
+        LL_TIM_IC_SetFilter(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_IC_FILTER_FDIV1);
+        LL_TIM_IC_SetPolarity(ENCODER_3_TIM_MODULE, LL_TIM_CHANNEL_CH2, LL_TIM_IC_POLARITY_RISING);
+        LL_TIM_SetCounterMode(ENCODER_3_TIM_MODULE, LL_TIM_COUNTERMODE_UP);
         LL_TIM_SetAutoReload(ENCODER_3_TIM_MODULE, ENCODER_TIM_ARR);
-        LL_TIM_SetEncoderMode(ENCODER_3_TIM_MODULE,
-                              LL_TIM_ENCODERMODE_X4_TI12);
+        LL_TIM_SetClockDivision(ENCODER_3_TIM_MODULE, LL_TIM_CLOCKDIVISION_DIV1);
+        LL_TIM_DisableARRPreload(ENCODER_3_TIM_MODULE);
+        LL_TIM_SetTriggerOutput(ENCODER_3_TIM_MODULE, LL_TIM_TRGO_RESET);
+        LL_TIM_DisableMasterSlaveMode(ENCODER_3_TIM_MODULE);
         *(odom_ctrl->p_enc_ticks[2]) = ENCODER_TIM_CNT_INITIAL_VALUE;
 
         /*
@@ -156,6 +177,7 @@ static void odom_hw_config(odometry_ctrl_t *odom_ctrl)
         LL_TIM_EnableCounter(ENCODER_2_TIM_MODULE);
         LL_TIM_EnableCounter(ENCODER_3_TIM_MODULE);
         LL_TIM_EnableCounter(ODOMETRY_TIM_MODULE);
+
         return;
 }
 
@@ -286,6 +308,11 @@ void odometry(void *arg)
         odom_ctrl_st.odom_notify = xTaskGetCurrentTaskHandle();
         odom_ctrl = &odom_ctrl_st;
         odom_hw_config(&odom_ctrl_st);
+        
+        //Enabling MPU6050
+        //I2C_Write(0x6B, 0x03);
+        //Select Full Scale Range for gyroscope=+-250 degree per second
+        //I2C_Write(0x1B, 0x00);
 
         while (1) {
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
@@ -416,6 +443,7 @@ void TIM6_DAC_IRQHandler(void)
                  */
                 odom_ctrl->prev_time = odom_ctrl->curr_time;
                 odom_ctrl->curr_time += 0.01f;
+
                 /*
                  * Notify task
                  */

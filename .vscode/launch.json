@@ -1,0 +1,16 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "STM32F4",
+            "cwd": "${workspaceRoot}/",
+            "executable": "build/robotflesh.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "configFiles": [
+                "C:\\ST\\xpack-openocd-0.10.0-15\\scripts\\target\\stm32f4x_stlink.cfg"
+            ]
+        }
+    ]
+}

@@ -37,39 +37,30 @@ static void stm_driver_send_msg(uint8_t *buff, int len)
 
 static void manip_dyn_stop(void)
 {
-        uint8_t tx[] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
-        stm_driver_send_msg(tx, 10);
+        uint8_t tx[] = {0x02, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                        0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+                        };
+        stm_driver_send_msg(tx, 18);
         return;
 }
 
 static void manip_hw_config(void)
 {
-        /*
-         * Pump pin configuration
+        /* 
+         * Dynamixel power control
          */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
-        LL_GPIO_SetPinMode(MANIP_PUMP_PORT, MANIP_PUMP_PIN,
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+        LL_GPIO_SetPinMode(DYNAMIXEL_PWR, DYNAMIXEL_PWR_PIN,
                            LL_GPIO_MODE_OUTPUT);
-        LL_GPIO_SetPinOutputType(MANIP_PUMP_PORT, MANIP_PUMP_PIN,
-                                 MANIP_PUMP_OUTPUT_TYPE);
-        LL_GPIO_SetPinPull(MANIP_PUMP_PORT, MANIP_PUMP_PIN,
-                           LL_GPIO_PULL_NO);
-        /*
-         * Pack check pin configuration
-         */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
-        LL_GPIO_SetPinMode(MANIP_PACK_CHECK_PORT, MANIP_PACK_CHECK_PIN,
-                           LL_GPIO_MODE_INPUT);
-        LL_GPIO_SetPinPull(MANIP_PACK_CHECK_PORT, MANIP_PACK_CHECK_PIN,
-                           LL_GPIO_PULL_NO);
+        LL_GPIO_ResetOutputPin(DYNAMIXEL_PWR, DYNAMIXEL_PWR_PIN);
+        
         /*
          * Servo motors pin configuration
          */
         LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOB);
-        LL_GPIO_SetPinMode(STICK_PORT, STICK_LEFT_PIN, LL_GPIO_MODE_ALTERNATE);
-        LL_GPIO_SetPinMode(STICK_PORT, STICK_RIGHT_PIN, LL_GPIO_MODE_ALTERNATE);
-        LL_GPIO_SetAFPin_8_15(STICK_PORT, STICK_LEFT_PIN, STICK_PIN_AF);
-        LL_GPIO_SetAFPin_8_15(STICK_PORT, STICK_RIGHT_PIN, STICK_PIN_AF);
+        LL_GPIO_SetPinMode(STICK_PORT, STICK_PIN, LL_GPIO_MODE_ALTERNATE);
+        LL_GPIO_SetAFPin_8_15(STICK_PORT, STICK_PIN, STICK_PIN_AF);
         /*
          * Servo motors PWM timer configuration
          */
@@ -77,92 +68,48 @@ static void manip_hw_config(void)
         LL_TIM_SetCounterMode(STICK_TIM, LL_TIM_COUNTERMODE_UP);
         LL_TIM_SetPrescaler(STICK_TIM, STICK_TIM_PSC);
         LL_TIM_SetAutoReload(STICK_TIM, STICK_TIM_ARR);
-        LL_TIM_CC_EnableChannel(STICK_TIM, LL_TIM_CHANNEL_CH1 |
-                                LL_TIM_CHANNEL_CH2);
+        LL_TIM_CC_EnableChannel(STICK_TIM, LL_TIM_CHANNEL_CH1);
         LL_TIM_OC_EnableFast(STICK_TIM, LL_TIM_CHANNEL_CH1);
-        LL_TIM_OC_EnableFast(STICK_TIM, LL_TIM_CHANNEL_CH2);
         LL_TIM_OC_EnablePreload(STICK_TIM, LL_TIM_CHANNEL_CH1);
-        LL_TIM_OC_EnablePreload(STICK_TIM, LL_TIM_CHANNEL_CH2);
         LL_TIM_EnableARRPreload(STICK_TIM);
         LL_TIM_OC_SetMode(STICK_TIM, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1);
-        LL_TIM_OC_SetMode(STICK_TIM, LL_TIM_CHANNEL_CH2, LL_TIM_OCMODE_PWM1);
-        LL_TIM_OC_SetCompareCH1(STICK_TIM, STEP_TIM_LEFT_CCR_INIT);
-        LL_TIM_OC_SetCompareCH2(STICK_TIM, STEP_TIM_RIGHT_CCR_INIT);
+        LL_TIM_OC_SetCompareCH1(STICK_TIM, STEP_TIM_CCR_INIT);
         LL_TIM_GenerateEvent_UPDATE(STICK_TIM);
-        LL_TIM_EnableCounter(STICK_TIM);
-
-        /*
-         * Barometer configuration
-         * Timer configuration for external ADC trigger
-         */
-        LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM5);
-        LL_TIM_SetCounterMode(BAR_TIM, LL_TIM_COUNTERMODE_UP);
-        LL_TIM_SetPrescaler(BAR_TIM, BAR_PWM_TIM_PSC);
-        LL_TIM_SetAutoReload(BAR_TIM, BAR_PWM_TIM_ARR);
-        LL_TIM_CC_EnableChannel(BAR_TIM, BAR_TIM_OC_CHANNEL);
-        LL_TIM_OC_SetMode(BAR_TIM, BAR_TIM_OC_CHANNEL, LL_TIM_OCMODE_PWM1);
-        LL_TIM_OC_EnablePreload(BAR_TIM, BAR_TIM_OC_CHANNEL);
-        LL_TIM_OC_SetCompareCH1(BAR_TIM, BAR_PWM_TIM_CCR_INIT);
-        LL_TIM_GenerateEvent_UPDATE(BAR_TIM);
-        /*
-         * ADC pin configuration
-         */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
-        LL_GPIO_SetPinMode(BAR_PORT, BAR_PIN, LL_GPIO_MODE_ANALOG);
-        /*
-         * ADC configuration
-         */
-        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_ADC1);
-        LL_ADC_SetCommonClock(BAR_ADC_CMN_INST, LL_ADC_CLOCK_SYNC_PCLK_DIV2);
-        LL_ADC_REG_SetSequencerRanks(BAR_ADC, LL_ADC_REG_RANK_1,
-                                     BAR_ADC_CHANNEL);
-        LL_ADC_REG_SetSequencerLength(BAR_ADC, LL_ADC_REG_SEQ_SCAN_DISABLE);
-        LL_ADC_SetResolution(BAR_ADC, BAR_ADC_RESOLUTION);
-        LL_ADC_SetDataAlignment(BAR_ADC, BAR_ADC_ALIGN);
-        LL_ADC_SetSequencersScanMode(BAR_ADC, BAR_ADC_SEQ_SCAN);
-        LL_ADC_REG_SetTriggerSource(BAR_ADC, BAR_ADC_TRIG);
-        LL_ADC_REG_SetContinuousMode(BAR_ADC, BAR_ADC_SINGLE_MODE);
-        LL_ADC_REG_SetDMATransfer(BAR_ADC, BAR_ADC_DMA_MODE);
-        LL_ADC_REG_SetFlagEndOfConversion(BAR_ADC, BAR_ADC_EOC_MODE);
-        LL_ADC_SetChannelSamplingTime(BAR_ADC, BAR_ADC_CHANNEL,
-                                      BAR_ADC_SAMPL_TIME);
-        LL_ADC_Enable(BAR_ADC);
-        LL_ADC_REG_StartConversionExtTrig(BAR_ADC, BAR_ADC_TRIG_POLARITY);
-        LL_TIM_EnableCounter(BAR_TIM);
-
-        /*
-         *  LL_ADC_EnableIT_OVR
-         */
-        /*
-         * DMA configuration
-         */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_DMA2);
-        LL_DMA_SetChannelSelection(BAR_DMA, BAR_DMA_STREAM, BAR_DMA_CHANNEL);
-        LL_DMA_ConfigAddresses(BAR_DMA, BAR_DMA_STREAM, BAR_DMA_SRC_ADDR,
-                               (uint32_t) &manip_ctrl->bar_adc_samples[0],
-                               BAR_DMA_DIRECTION);
-        LL_DMA_SetDataLength(BAR_DMA, BAR_DMA_STREAM, BAR_ADC_SAMPLES_SIZE);
-        LL_DMA_SetPeriphSize(BAR_DMA, BAR_DMA_STREAM, LL_DMA_PDATAALIGN_BYTE);
-        LL_DMA_SetMemorySize(BAR_DMA, BAR_DMA_STREAM, LL_DMA_MDATAALIGN_BYTE);
-        LL_DMA_SetMode(BAR_DMA, BAR_DMA_STREAM, BAR_DMA_MODE);
-        LL_DMA_SetMemoryIncMode(BAR_DMA, BAR_DMA_STREAM,
-                                BAR_DMA_MEM_INC_MODE);
-        LL_DMA_SetPeriphIncMode(BAR_DMA, BAR_DMA_STREAM,
-                                BAR_DMA_PERIPH_INC_MODE);
-        LL_DMA_SetStreamPriorityLevel(BAR_DMA, BAR_DMA_STREAM,
-                                      LL_DMA_PRIORITY_VERYHIGH);
-        LL_DMA_EnableStream(BAR_DMA, BAR_DMA_STREAM);
-
+        
         /*
          * Dynamixel update timer
          */
-        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM8);
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM10);
         LL_TIM_SetAutoReload(DYNAMIXEL_TIM, DYNAMIXEL_TIM_ARR);
         LL_TIM_SetPrescaler(DYNAMIXEL_TIM, DYNAMIXEL_TIM_PSC);
         LL_TIM_SetCounterMode(DYNAMIXEL_TIM, LL_TIM_COUNTERMODE_UP);
         LL_TIM_EnableIT_UPDATE(DYNAMIXEL_TIM);
         NVIC_SetPriority(DYNAMIXEL_TIM_IRQN, DYNAMIXEL_TIM_IRQN_PRIORITY);
         NVIC_EnableIRQ(DYNAMIXEL_TIM_IRQN);
+
+        /* Setting gripper status pins */
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
+        LL_GPIO_SetPinMode(GRP_PORT, GRP_PIN_1,
+                           LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinPull(GRP_PORT, GRP_PIN_1,
+                           LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinMode(GRP_PORT, GRP_PIN_2,
+                           LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinPull(GRP_PORT, GRP_PIN_2,
+                           LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinMode(GRP_PORT, GRP_PIN_3,
+                           LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinPull(GRP_PORT, GRP_PIN_3,
+                           LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinMode(GRP_PORT, GRP_PIN_4,
+                           LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinPull(GRP_PORT, GRP_PIN_4,
+                           LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinMode(GRP_PORT, GRP_PIN_5,
+                           LL_GPIO_MODE_INPUT);
+        LL_GPIO_SetPinPull(GRP_PORT, GRP_PIN_5,
+                           LL_GPIO_PULL_NO);                   
+
         return;
 }
 
@@ -178,34 +125,10 @@ static void stick_disable_torque()
         return;
 }
 
-static void stick_left_set_angle(uint8_t angle)
+static void stick_set_angle(uint8_t angle)
 {
         LL_TIM_OC_SetCompareCH1(STICK_TIM, angle);
         return;
-}
-
-static void stick_right_set_angle(uint8_t angle)
-{
-        LL_TIM_OC_SetCompareCH2(STICK_TIM, angle);
-        return;
-}
-
-static void manip_pump_start(void)
-{
-        LL_GPIO_SetOutputPin(MANIP_PUMP_PORT, MANIP_PUMP_PIN);
-        return;
-}
-
-static void manip_pump_stop(void)
-{
-        LL_GPIO_ResetOutputPin(MANIP_PUMP_PORT, MANIP_PUMP_PIN);
-        return;
-}
-
-static uint8_t manip_pack_check(void)
-{
-        return (uint8_t) !LL_GPIO_IsInputPinSet(MANIP_PACK_CHECK_PORT,
-                                               MANIP_PACK_CHECK_PIN);
 }
 
 static void dyn_set_angle(uint8_t num, uint8_t id, uint16_t angle,
@@ -268,6 +191,7 @@ static void cmd_update(void)
         }
 }
 
+
 static void dyn_time_slice_operator(manip_ctrl_t *manip_ctrl)
 {
         dyn_ctrl_t *dyn = manip_ctrl->sequence_cmd;
@@ -276,12 +200,12 @@ static void dyn_time_slice_operator(manip_ctrl_t *manip_ctrl)
         if (!(dyn[manip_ctrl->current_cmd].cmd_started) &&
             !(is_dyn_flag_set(manip_ctrl, dyn[manip_ctrl->current_cmd].id))) {
                 dyn[manip_ctrl->current_cmd].cmd_started = 1;
-                stm_driver_send_msg(dyn[manip_ctrl->current_cmd].cmd_buff, 10);
+                stm_driver_send_msg(dyn[manip_ctrl->current_cmd].cmd_buff, 18);
                 dyn[manip_ctrl->current_cmd].start_time = manip_ctrl->current_time;
                 dyn_set_flag(manip_ctrl, dyn[manip_ctrl->current_cmd].id);
                 if (manip_ctrl->current_cmd != manip_ctrl->total_cmd - 1) {
                         manip_ctrl->current_cmd++;
-                        vTaskDelay(10);
+                        vTaskDelay(150);
                 }
 
         }
@@ -290,64 +214,55 @@ static void dyn_time_slice_operator(manip_ctrl_t *manip_ctrl)
 }
 
 /*
- * Set initial positions
- */
-static void dyn_set_init_pos(void)
-{
-        uint8_t tx[10];
-        int i = 0;
-        int j = 0;
-
-        memset(tx, 0x00, 10);
-        tx[0] = 0x03;
-        for (i = 0, j = 1; i < NUMBER_OF_DYNAMIXELS; i++, j = j + 2) {
-                tx[j] = (uint8_t) ((manip_ctrl->dyn_pos[i] >> 8) & 0xff);
-                tx[j+1] = (uint8_t) (manip_ctrl->dyn_pos[i] & 0xff);
-        }
-        stm_driver_send_msg(tx, 10);
-        return;
-}
-
-/*
  * Set initial speeds
  */
 static void dyn_set_speeds(void)
 {
-        uint8_t tx[10];
+        uint8_t tx[18];
         int i = 0;
         int j = 0;
 
-        memset(tx, 0x00, 10);
+        memset(tx, 0x00, 18);
         tx[0] = 0x01;
         for (i = 0, j = 1; i < NUMBER_OF_DYNAMIXELS; i++, j = j + 2) {
                 tx[j] = (uint8_t) ((manip_ctrl->dyn_speeds[i] >> 8) & 0xff);
                 tx[j+1] = (uint8_t) (manip_ctrl->dyn_speeds[i] & 0xff);
         }
-        stm_driver_send_msg(tx, 10);
+        stm_driver_send_msg(tx, 18);
         return;
 }
 
-/*
- * Set all manipulators to default position
- */
-static void manip_default_pos(void)
+static void dyn_set_init_pos(void)
 {
-        uint32_t cur_step = 0;
-        uint32_t goal_step = 0;
-        /*
-         * Start step motor calibration
-         */
-        step_start_calibration(0);
-        /*
-         * Set grabber and manipulator to default states
-         */
-        while (step_is_running(0))
-                taskYIELD();
-        cur_step = step_get_current_step(0);
-        goal_step = cur_step + PACK_SIZE_IN_STEPS;
-        step_set_step_goal(0, goal_step);
-        dyn_set_init_pos();
-        stick_disable_torque();
+        uint8_t tx[18];
+        int i = 0;
+        int j = 0;
+
+        memset(tx, 0x00, 18);
+        tx[0] = 0x03;
+        for (i = 0, j = 1; i < NUMBER_OF_DYNAMIXELS; i++, j = j + 2) {
+                tx[j] = (uint8_t) ((manip_ctrl->dyn_pos[i] >> 8) & 0xff);
+                tx[j+1] = (uint8_t) (manip_ctrl->dyn_pos[i] & 0xff);
+        }
+        stm_driver_send_msg(tx, 18);
+        return;
+}
+
+static void dyn_set_sync_pos(uint8_t mask, uint16_t *angles)
+{
+        uint8_t tx[18];
+        int i = 0;
+        int j = 0;
+
+        memset(tx, 0x00, 18);
+        tx[0] = 0x04;
+        for (i = 0, j = 1; i < 5; i++, j = j + 2) {
+                if ((mask >> i)  & 0x01) {
+                        tx[j] = (uint8_t) ((angles[i] >> 8) & 0xff);
+                        tx[j+1] = (uint8_t) (angles[i] & 0xff);
+                }
+        }
+        stm_driver_send_msg(tx, 18);
         return;
 }
 
@@ -356,11 +271,6 @@ static void manip_default_pos(void)
  */
 void manipulators_block(void)
 {
-        /*
-         * Stop and block pump
-         */
-        manip_pump_stop();
-        manip_set_flag(manip_ctrl, BLOCK_PUMP);
         /*
          * Stop and block dynamixels
          */
@@ -375,12 +285,19 @@ void manipulators_block(void)
          * Turn off servos
          */
         stick_disable_torque();
+        LL_GPIO_SetOutputPin(DYNAMIXEL_PWR, DYNAMIXEL_PWR_PIN);
         return;
+}
+
+void manipulators_rise_flag(void)
+{
+        stick_set_angle(1);
+        stick_enable_torque();
 }
 
 void manipulators_manager(void *arg)
 {
-        (void) arg;
+       (void) arg;
         manip_ctrl_t manip_ctrl_st;
         int i = 0;
         uint16_t dyn_speeds[] = {DYN_SPEEDS};
@@ -393,14 +310,13 @@ void manipulators_manager(void *arg)
         manip_ctrl_st.total_cmd = 0;
         manip_ctrl_st.current_cmd = 0;
         manip_ctrl_st.completed_cmd = 0;
-        manip_ctrl_st.bar_check = 0;
         for (i = 0; i < NUMBER_OF_DYNAMIXELS; i++) {
                 manip_ctrl_st.dyn_pos[i] = 0x0000;
                 manip_ctrl_st.dyn_speeds[i] = dyn_speeds[i];
                 manip_ctrl_st.dyn_pos[i] = dyn_init_pos[i];
         }
         for (i = 0; i < MAX_DYN_COMMANDS; i++) {
-                memset(manip_ctrl_st.sequence_cmd[i].cmd_buff, 0, 10);
+                memset(manip_ctrl_st.sequence_cmd[i].cmd_buff, 0, 18);
                 manip_ctrl_st.sequence_cmd[i].goal_pos = 0x0000;
                 manip_ctrl_st.sequence_cmd[i].current_pos = 0x0000;
                 manip_ctrl_st.sequence_cmd[i].start_time = 0;
@@ -409,16 +325,33 @@ void manipulators_manager(void *arg)
         }
         manip_ctrl = &manip_ctrl_st;
         manip_hw_config();
-        step_init();
         /*
          * Init all speeds and wait
          */
         dyn_set_speeds();
-        vTaskDelay(30);
+        vTaskDelay(60);
+
+        step_init();
+
+        uint32_t goal_step = 0;
+        uint32_t cur_step = 0;
+        /*
+         * Start step motor calibration
+         */
+        step_start_calibration(0);
         /*
          * Set all manipulators to default position
          */
-        manip_default_pos();
+        dyn_set_init_pos();
+
+        while (step_is_running(0))
+                taskYIELD();
+        cur_step = step_get_current_step(0);
+        goal_step = cur_step + MID_STEPS;
+        step_set_step_goal(0, goal_step);
+
+        vTaskDelay(60);
+
         while (1) {
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
                 LL_TIM_EnableCounter(DYNAMIXEL_TIM);
@@ -442,33 +375,18 @@ void manipulators_manager(void *arg)
  * Set of motor related handlers for terminal
  */
 
-/*
- * Check pack status: 0 - fail, 1 - success
- */
-int cmd_pack_check(char *args)
+int cmd_hold_status(char *args)
 {
-        uint8_t pack_status = manip_pack_check();
-        memcpy(args, &pack_status, 1);
-        return 1;
-}
+        uint8_t cups[5];
+        
+        cups[0] = !LL_GPIO_IsInputPinSet(GRP_PORT,GRP_PIN_1);
+        cups[1] = !LL_GPIO_IsInputPinSet(GRP_PORT,GRP_PIN_2);
+        cups[2] = !LL_GPIO_IsInputPinSet(GRP_PORT,GRP_PIN_3);
+        cups[3] = !LL_GPIO_IsInputPinSet(GRP_PORT,GRP_PIN_4);
+        cups[4] = !LL_GPIO_IsInputPinSet(GRP_PORT,GRP_PIN_5);
 
-/*
- * Barometer check pack status
- */
-int cmd_bar_check(char *args)
-{
-        int i = 0;
-        uint32_t average_sample = 0;
-
-         for (i = 0; i < BAR_ADC_SAMPLES_SIZE; i++) {
-                average_sample += manip_ctrl->bar_adc_samples[i];
-        }
-        average_sample /= BAR_ADC_SAMPLES_SIZE;
-        if (average_sample > BAR_PACK_CHECK_TRESHOLD)
-                *args = 0;
-        else
-                *args = 1;
-        return 1;
+        memcpy(args, &cups, 5);
+        return 5;
 }
 
 /*
@@ -506,50 +424,6 @@ error_step_set_step:
 }
 
 /*
- * Make step down for one pack
- */
-int cmd_step_down(char *args)
-{
-        uint32_t cur_step = 0;
-        uint32_t goal_step = 0;
-
-        if (!step_is_calibrated(0) ||
-            is_manip_flag_set(manip_ctrl, BLOCK_STEPPER))
-                goto error_step_down;
-        cur_step = step_get_current_step(0);
-        goal_step = cur_step + PACK_SIZE_IN_STEPS;
-        if (step_set_step_goal(0, goal_step))
-                goto error_step_down;
-        memcpy(args, "OK", 3);
-        return 3;
-error_step_down:
-        memcpy(args, "ER", 3);
-        return 3;
-}
-
-/*
- * Make step up for one pack
- */
-int cmd_step_up(char *args)
-{
-        uint32_t cur_step = 0;
-        uint32_t goal_step = 0;
-
-        if (!step_is_calibrated(0) ||
-            is_manip_flag_set(manip_ctrl, BLOCK_STEPPER))
-                goto error_step_up;
-        cur_step = step_get_current_step(0);
-        goal_step = cur_step - PACK_SIZE_IN_STEPS;
-        if (step_set_step_goal(0, goal_step))
-                goto error_step_up;
-        memcpy(args, "OK", 3);
-        return 3;
-error_step_up:
-        memcpy(args, "ER", 3);
-        return 3;
-}
-
-/*
  * Retern running state
  */
 int cmd_step_is_running(char *args)
@@ -564,87 +438,151 @@ error_step_is_running:
 }
 
 /*
- * Left stick to default position
+ * Set arm down
  */
-int cmd_left_stick_default(char *args)
+int cmd_arm_down(char *args)
 {
-        stick_left_set_angle(145);
-        stick_enable_torque();
+
+        if (!step_is_calibrated(0) ||
+            is_manip_flag_set(manip_ctrl, BLOCK_STEPPER))
+                goto error_arm_down;
+
+        if (step_set_step_goal(0, SHELF_STEPS))
+                goto error_arm_down;
+                
         memcpy(args, "OK", 3);
+        return 3;
+
+error_arm_down:
+        memcpy(args, "ER", 3);
+        return 3;
+}
+
+int cmd_arm_middle(char *args)
+{
+
+        if (!step_is_calibrated(0) ||
+            is_manip_flag_set(manip_ctrl, BLOCK_STEPPER))
+                goto error_arm_middle;
+
+        if (step_set_step_goal(0, MID_STEPS))
+                goto error_arm_middle;
+                
+        memcpy(args, "OK", 3);
+        return 3;
+
+error_arm_middle:
+        memcpy(args, "ER", 3);
         return 3;
 }
 
 /*
- * Left stick to down position
+ * Set arm up
  */
-int cmd_left_stick_down(char *args)
+int cmd_arm_up(char *args)
 {
-        stick_left_set_angle(200);
-        stick_enable_torque();
+
+        if (!step_is_calibrated(0) ||
+            is_manip_flag_set(manip_ctrl, BLOCK_STEPPER))
+                goto error_arm_up;
+
+        if (step_set_step_goal(0, (int)(ONECM_STEPS*0.3)))
+                goto error_arm_up;
+                
         memcpy(args, "OK", 3);
+        return 3;
+error_arm_up:
+        memcpy(args, "ER", 3);
         return 3;
 }
 
 /*
- * Right stick to default position
+ * Set arm floor
  */
-int cmd_right_stick_default(char *args)
+int cmd_arm_floor(char *args)
 {
-        stick_right_set_angle(182);
-        stick_enable_torque();
+
+        if (!step_is_calibrated(0) ||
+            is_manip_flag_set(manip_ctrl, BLOCK_STEPPER))
+                goto error_arm_floor;
+
+        if (step_set_step_goal(0, FLOOR_STEPS))
+                goto error_arm_floor;
+                
         memcpy(args, "OK", 3);
+        return 3;
+error_arm_floor:
+        memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Right stick to down position
- */
-int cmd_right_stick_down(char *args)
-{
-        stick_right_set_angle(120);
-        stick_enable_torque();
+int cmd_paws_open(char *args)
+{       
+        /*
+         * Check whether manipulators is ready or not
+         */
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paws_open;
+        /*
+         * Set dynamixel angles
+         */
+        uint16_t angles[5] = {0x0310,0x0310,0x0310,0x0310,0x0310};
+        dyn_set_sync_pos((uint8_t)*args, angles);
+
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+
         memcpy(args, "OK", 3);
+        return 3;
+
+error_paws_open:
+        memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Set releaser speed high for weight unloading
- */
-int cmd_set_releaser_speed_low(char *args)
-{
-        manip_ctrl->dyn_speeds[3] = 0x0200;
-        dyn_set_speeds();
-        memcpy(args, "OK", 3);
-        return 3;
-}
-
-/*
- * Set releaser speed low for ground unloading
- */
-int cmd_set_releaser_speed_high(char *args)
-{
-        manip_ctrl->dyn_speeds[3] = 0x03ff;
-        dyn_set_speeds();
-        memcpy(args, "OK", 3);
-        return 3;
-}
-
-/*
- * Set pump to ground
- */
-int cmd_set_pump_moving(char *args)
+int cmd_paws_close(char *args)
 {
         /*
          * Check whether manipulators is ready or not
          */
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_set_pump_moving;
+                goto error_paws_close;
         /*
          * Set dynamixel angles
          */
-        dyn_set_angle(0, 0x01, 0x030c, manip_ctrl->dyn_speeds[0]);
-        dyn_set_angle(1, 0x02, 0x0194, manip_ctrl->dyn_speeds[1]);
+        uint16_t angles[5] = {0x0211,0x0215,0x0219,0x021A,0x021A};
+        dyn_set_sync_pos((uint8_t)*args, angles);
+
+        /*
+         * Notify manipulators manager
+         */
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+
+        memcpy(args, "OK", 3);
+        return 3;
+
+error_paws_close:
+        memcpy(args, "ER", 3);
+        return 3;
+}
+
+int cmd_l_door_open_y(char *args)
+{
+        /*
+         * Check whether manipulators is ready or not
+         */
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_l_door_open;
+        /*
+         * Set dynamixel angles
+         */
+        dyn_set_angle(0, 0x07, 0x0133, manip_ctrl->dyn_speeds[6]);
         /*
          * Notify manipulators manager
          */
@@ -657,28 +595,23 @@ int cmd_set_pump_moving(char *args)
         memcpy(args, "OK", 3);
         return 3;
 
-error_set_pump_moving:
+error_l_door_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Set pump to ground
- */
-int cmd_set_pump_ground(char *args)
+int cmd_l_door_open_x(char *args)
 {
         /*
          * Check whether manipulators is ready or not
          */
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_set_pump_low;
+                goto error_l_door_open;
         /*
          * Set dynamixel angles
          */
-        dyn_set_angle(0, 0x01, 0x032c, manip_ctrl->dyn_speeds[0]);
-        dyn_set_angle(1, 0x02, 0x0194, manip_ctrl->dyn_speeds[1]);
-        dyn_set_angle(2, 0x01, 0x036c, manip_ctrl->dyn_speeds[0]);
+        dyn_set_angle(0, 0x07, 0x0258, manip_ctrl->dyn_speeds[6]);
         /*
          * Notify manipulators manager
          */
@@ -691,27 +624,23 @@ int cmd_set_pump_ground(char *args)
         memcpy(args, "OK", 3);
         return 3;
 
-error_set_pump_low:
+error_l_door_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Set pump to wall
- */
-int cmd_set_pump_wall(char *args)
+int cmd_l_door_close(char *args)
 {
         /*
          * Check whether manipulators is ready or not
          */
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_set_pump_default;
-         /*
+                goto error_l_door_close;
+        /*
          * Set dynamixel angles
          */
-        dyn_set_angle(0, 0x01, 0x02af, manip_ctrl->dyn_speeds[0]);
-        dyn_set_angle(1, 0x02, 0x0229, manip_ctrl->dyn_speeds[1]);
+        dyn_set_angle(0, 0x07, 0x03D1, manip_ctrl->dyn_speeds[6]);
         /*
          * Notify manipulators manager
          */
@@ -724,32 +653,23 @@ int cmd_set_pump_wall(char *args)
         memcpy(args, "OK", 3);
         return 3;
 
-error_set_pump_default:
+error_l_door_close:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Set pump to platform
- */
-int cmd_set_pump_platform(char *args)
+int cmd_r_door_open_y(char *args)
 {
         /*
          * Check whether manipulators is ready or not
          */
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_set_pump_high;
+                goto error_r_door_open;
         /*
          * Set dynamixel angles
          */
-        dyn_set_angle(0, 0x01, 0x01c8, manip_ctrl->dyn_speeds[0]);
-        dyn_set_angle(1, 0x02, 0x0248, manip_ctrl->dyn_speeds[1]);
-        dyn_set_angle(2, 0x01, 0x018c, manip_ctrl->dyn_speeds[0]);
-        dyn_set_angle(3, 0x02, 0x020d, manip_ctrl->dyn_speeds[1]);
-        dyn_set_angle(4, 0x01, 0x015a, manip_ctrl->dyn_speeds[0]);
-        manip_ctrl->sequence_cmd[manip_ctrl->total_cmd - 1].delay_ms +=
-                                                        SET_PUMP_PLATFORM_DELAY;
+        dyn_set_angle(0, 0x08, 0x02BB, manip_ctrl->dyn_speeds[7]);
         /*
          * Notify manipulators manager
          */
@@ -762,26 +682,23 @@ int cmd_set_pump_platform(char *args)
         memcpy(args, "OK", 3);
         return 3;
 
-error_set_pump_high:
+error_r_door_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Release grabber
- */
-int cmd_release_grabber(char *args)
+int cmd_r_door_open_x(char *args)
 {
         /*
          * Check whether manipulators is ready or not
          */
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_release_grabber;
+                goto error_r_door_open;
         /*
          * Set dynamixel angles
          */
-        dyn_set_angle(0, 0x03, 0x00df, manip_ctrl->dyn_speeds[2]);
+        dyn_set_angle(0, 0x08, 0x018F, manip_ctrl->dyn_speeds[7]);
         /*
          * Notify manipulators manager
          */
@@ -794,26 +711,23 @@ int cmd_release_grabber(char *args)
         memcpy(args, "OK", 3);
         return 3;
 
-error_release_grabber:
+error_r_door_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Prop pack
- */
-int cmd_prop_pack(char *args)
+int cmd_r_door_close(char *args)
 {
         /*
          * Check whether manipulators is ready or not
          */
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_prop_pack;
+                goto error_r_door_close;
         /*
          * Set dynamixel angles
          */
-        dyn_set_angle(0, 0x03, 0x01cc, manip_ctrl->dyn_speeds[2]);
+        dyn_set_angle(0, 0x08, 0x002A, manip_ctrl->dyn_speeds[7]);
         /*
          * Notify manipulators manager
          */
@@ -826,156 +740,167 @@ int cmd_prop_pack(char *args)
         memcpy(args, "OK", 3);
         return 3;
 
-error_prop_pack:
+error_r_door_close:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Grab pack
- */
-int cmd_grab_pack(char *args)
-{
-        /*
-         * Check whether manipulators is ready or not
-         */
+int cmd_paw_1_open(char *args)
+{       
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_grab_pack;
-        /*
-         * Set dynamixel angles
-         */
-        dyn_set_angle(0, 0x03, 0x0259, manip_ctrl->dyn_speeds[2]);
-        manip_ctrl->sequence_cmd[manip_ctrl->total_cmd - 1].delay_ms +=
-                                                            GRAB_PACK_DELAY;
-        /*
-         * Notify manipulators manager
-         */
+                goto error_paw_1_open;
+        dyn_set_angle(0, 1, 0x0310, manip_ctrl->dyn_speeds[0]);
         dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
         manip_set_flag(manip_ctrl, DYN_BUSY);
         xTaskNotifyGive(manip_ctrl->manip_notify);
-        /*
-         * Sent command to stm
-         */
         memcpy(args, "OK", 3);
         return 3;
-
-error_grab_pack:
+error_paw_1_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Releaser set to default position
- */
-int cmd_releaser_default(char *args)
-{
-        /*
-         * Check whether manipulators is ready or not
-         */
+int cmd_paw_2_open(char *args)
+{       
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_releaser_default;
-        /*
-         * Set dynamixel angles
-         */
-        dyn_set_angle(0, 0x04, 0x01eb, manip_ctrl->dyn_speeds[3]);
-        /*
-         * Notify manipulators manager
-         */
+                goto error_paw_2_open;
+        dyn_set_angle(0, 2, 0x0310, manip_ctrl->dyn_speeds[1]);
         dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
         manip_set_flag(manip_ctrl, DYN_BUSY);
         xTaskNotifyGive(manip_ctrl->manip_notify);
-        /*
-         * Sent command to stm
-         */
         memcpy(args, "OK", 3);
         return 3;
-
-error_releaser_default:
+error_paw_2_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Releaser throw pack
- */
-int cmd_releaser_throw(char *args)
-{
-        /*
-         * Check whether manipulators is ready or not
-         */
+int cmd_paw_3_open(char *args)
+{       
         if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
             || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
-                goto error_releaser_throw;
-        /*
-         * Set dynamixel angles
-         */
-        dyn_set_angle(0, 0x04, 0x02cf, manip_ctrl->dyn_speeds[3]);
-        manip_ctrl->sequence_cmd[manip_ctrl->total_cmd - 1].delay_ms +=
-                                                        RELEASER_THROW_DELAY;
-
-        /*
-         * Notify manipulators manager
-         */
+                goto error_paw_3_open;
+        dyn_set_angle(0, 3, 0x0310, manip_ctrl->dyn_speeds[2]);
         dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
         manip_set_flag(manip_ctrl, DYN_BUSY);
         xTaskNotifyGive(manip_ctrl->manip_notify);
-        /*
-         * Sent command to stm
-         */
         memcpy(args, "OK", 3);
         return 3;
-
-error_releaser_throw:
+error_paw_3_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Start pumping
- */
-int cmd_start_pump(char *args)
-{
-        /*
-         * Check whether manipulators is ready or not
-         */
-        if (!manip_ctrl || is_manip_flag_set(manip_ctrl, BLOCK_PUMP))
-                goto error_start_pump;
-
-        /*
-         * Start pumping
-         */
-        manip_pump_start();
-
+int cmd_paw_4_open(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_4_open;
+        dyn_set_angle(0, 4, 0x0310, manip_ctrl->dyn_speeds[3]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
         memcpy(args, "OK", 3);
         return 3;
-
-error_start_pump:
+error_paw_4_open:
         memcpy(args, "ER", 3);
         return 3;
 }
 
-/*
- * Stop pumping
- */
-int cmd_stop_pump(char *args)
-{
-        /*
-         * Check whether manipulators is ready or not
-         */
-        if (!manip_ctrl || is_manip_flag_set(manip_ctrl, BLOCK_PUMP))
-                goto error_stop_pump;
-
-        /*
-         * Stop pumping
-         */
-        manip_pump_stop();
-
+int cmd_paw_5_open(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_5_open;
+        dyn_set_angle(0, 5, 0x0310, manip_ctrl->dyn_speeds[4]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
         memcpy(args, "OK", 3);
         return 3;
+error_paw_5_open:
+        memcpy(args, "ER", 3);
+        return 3;
+}
 
-error_stop_pump:
+int cmd_paw_1_close(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_1_close;
+        dyn_set_angle(0, 1, 0x0210, manip_ctrl->dyn_speeds[0]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+        memcpy(args, "OK", 3);
+        return 3;
+error_paw_1_close:
+        memcpy(args, "ER", 3);
+        return 3;
+}
+
+int cmd_paw_2_close(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_2_close;
+        dyn_set_angle(0, 2, 0x0210, manip_ctrl->dyn_speeds[1]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+        memcpy(args, "OK", 3);
+        return 3;
+error_paw_2_close:
+        memcpy(args, "ER", 3);
+        return 3;
+}
+
+int cmd_paw_3_close(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_3_close;
+        dyn_set_angle(0, 3, 0x0210, manip_ctrl->dyn_speeds[2]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+        memcpy(args, "OK", 3);
+        return 3;
+error_paw_3_close:
+        memcpy(args, "ER", 3);
+        return 3;
+}
+
+int cmd_paw_4_close(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_4_close;
+        dyn_set_angle(0, 4, 0x0210, manip_ctrl->dyn_speeds[3]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+        memcpy(args, "OK", 3);
+        return 3;
+error_paw_4_close:
+        memcpy(args, "ER", 3);
+        return 3;
+}
+
+int cmd_paw_5_close(char *args)
+{       
+        if (!manip_ctrl || is_dyn_flag_set(manip_ctrl, DYN_BUSY_POS)
+            || is_manip_flag_set(manip_ctrl, BLOCK_DYN))
+                goto error_paw_5_close;
+        dyn_set_angle(0, 5, 0x0210, manip_ctrl->dyn_speeds[4]);
+        dyn_set_flag(manip_ctrl, DYN_BUSY_POS);
+        manip_set_flag(manip_ctrl, DYN_BUSY);
+        xTaskNotifyGive(manip_ctrl->manip_notify);
+        memcpy(args, "OK", 3);
+        return 3;
+error_paw_5_close:
         memcpy(args, "ER", 3);
         return 3;
 }
@@ -983,7 +908,7 @@ error_stop_pump:
 /*
  * Hardware interrupts
  */
-void TIM8_UP_TIM13_IRQHandler(void)
+void TIM1_UP_TIM10_IRQHandler(void)
 {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
 

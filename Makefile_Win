@@ -2,8 +2,8 @@
 # Makefile for STM32F4 Discovery board projects
 
 OUTPATH = build
-PROJECT = $(OUTPATH)/robotflesh
-OPENOCD_SCRIPT_DIR ?= /usr/share/openocd/scripts
+PROJECT = $(OUTPATH)\\robotflesh
+OPENOCD_SCRIPT_DIR ?= C:\\ST\\xpack-openocd-0.10.0-15\\scripts
 HEAP_SIZE = 0x500
 
 ################
@@ -28,18 +28,17 @@ OBJS = $(SOURCES_S:.s=.o) $(SOURCES_C:.c=.o)
 
 # Includes and Defines
 
-INC_RTOS = -Ifreertos -Ifreertos/include -Ifreertos/portable/GCC/ARM_CM4F
+INC_RTOS = -Ifreertos -Ifreertos\\include -Ifreertos\\portable\\GCC\\ARM_CM4F
 INC_CORE = -Icore
 INC_PERIPH = -Iplib
 INC_ARM_MATH = -Imath
-INC_DEBUG = -Idebug
 INCLUDES = -Iold -Ilib
 INCLUDES += $(INC_RTOS)
 INCLUDES += $(INC_CORE)
 INCLUDES += $(INC_PERIPH)
 INCLUDES += $(INC_ARM_MATH)
 
-DEFINES = -DSTM32 -DSTM32F4 -DSTM32F407xx -DHEAP_SIZE=$(HEAP_SIZE) -DUSE_FULL_LL_DRIVER
+DEFINES = -DSTM32 -DSTM32F4 -DSTM32F407xx -DHEAP_SIZE=$(HEAP_SIZE)
 DEFINES += -DARM_MATH_CM4
 
 # Compiler/Assembler/Linker/etc
@@ -56,15 +55,15 @@ OBJDUMP = $(PREFIX)-objdump
 READELF = $(PREFIX)-readelf
 SIZE = $(PREFIX)-size
 GDB = $(PREFIX)-gdb
-RM = rm -f
-OPENOCD=openocd
+RM = erase /s
+OPENOCD=C:\\ST\\xpack-openocd-0.10.0-15\\bin\\openocd.exe
 
 # Compiler options
 
 MCUFLAGS = -mcpu=cortex-m4 -mlittle-endian -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
 	   -mthumb -fsingle-precision-constant -mno-unaligned-access
 
-DEBUG_OPTIMIZE_FLAGS = -O0 -ggdb -gdwarf-2
+DEBUG_OPTIMIZE_FLAGS = -O0 -ggdb -gdwarf-4 -g3
 
 CFLAGS = -Wall -Wextra
 CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib\
@@ -74,7 +73,7 @@ CFLAGS += $(DEFINES) $(MCUFLAGS) $(DEBUG_OPTIMIZE_FLAGS) $(CFLAGS_EXTRA) $(INCLU
 
 LDFLAGS = -static $(MCUFLAGS) -Wl,--start-group -lgcc -lc -lg -Wl,--end-group \
 	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld -specs=nano.specs \
-	  -u _printf_float
+	  -u _printf_float #-specs=nosys.specs #Use if you have an error with ld file (undefined reference to `_getpid' )
 	  #-u _scanf_float
 
 .PHONY: dirs all clean flash erase
@@ -87,7 +86,7 @@ ${OUTPATH}:
 	mkdir ${OUTPATH}
 
 clean:
-	$(RM) $(OBJS) $(PROJECT).elf $(PROJECT).bin $(PROJECT).asm
+	$(RM) *.o $(PROJECT).elf $(PROJECT).bin $(PROJECT).asm
 
 # Hardware specific
 
@@ -99,7 +98,7 @@ erase:
 
 gdb-server-ocd:
 	$(OPENOCD) -f $(OPENOCD_SCRIPT_DIR)/interface/stlink-v2.cfg \
-		   -f $(OPENOCD_SCRIPT_DIR)/board/stm32f4discovery.cfg
+		   -f $(OPENOCD_SCRIPT_DIR)/target/stm32f4x_stlink.cfg
 
 gdb-server-st:
 	st-util

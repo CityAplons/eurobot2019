@@ -7,9 +7,11 @@
 #include "dev_map.h"
 
 #define STEPS_PER_REVOLUTION        200
-#define PACK_SIZE_IN_STEPS          630
-#define NUMBER_OF_PACKS             7
-#define MAX_STEPS                   NUMBER_OF_PACKS * PACK_SIZE_IN_STEPS
+#define ONECM_STEPS                 252
+#define MAX_STEPS                   ONECM_STEPS * 9
+#define FLOOR_STEPS                 (int)(ONECM_STEPS * 8.0f)
+#define SHELF_STEPS                 (int)(ONECM_STEPS * 6.8f)
+#define MID_STEPS                   (int)(ONECM_STEPS * 5.5f)
 
 #define IS_VALID_ID(id)             ((id) < NUMBER_OF_STEP_MOTORS)
 
@@ -39,7 +41,8 @@
 typedef enum {
         REV_PER_SEC_1 =    0x01,
         REV_PER_SEC_0_5 =  0x02,
-        REV_PER_SEC_0_25 = 0x04
+        REV_PER_SEC_0_25 = 0x04,
+        REV_PER_SEC_0_05 = 0x14
 } step_speed_t;
 
 /*

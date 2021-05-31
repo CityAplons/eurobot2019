@@ -32,7 +32,7 @@ static void step_hw_config(void)
         /*
          * Hardware initialization for limit switch
          */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_GPIO_SetPinMode(STEP_LIMIT_SWITCH_PORT, STEP_LIMIT_SWITCH_PIN,
                            LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(STEP_LIMIT_SWITCH_PORT, STEP_LIMIT_SWITCH_PIN,

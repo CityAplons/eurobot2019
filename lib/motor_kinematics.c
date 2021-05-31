@@ -139,7 +139,7 @@ static void mk_hw_config()
 {
         /* Init motor_kinematics pins */
         LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
         LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_APB1_GRP1_EnableClock(LL_APB1_GRP1_PERIPH_TIM4);
 
@@ -224,12 +224,12 @@ static void mk_hw_config()
         LL_TIM_EnableCounter(MOTOR_TIM);
 
         /* Setting cord pin */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOD);
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_GPIO_SetPinMode(MOTOR_CORD_PORT, MOTOR_CORD_PIN, LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(MOTOR_CORD_PORT, MOTOR_CORD_PIN, LL_GPIO_PULL_NO);
 
-        /* Setting strategy button */
-        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOA);
+        /* Setting strategy button */   
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOE);
         LL_GPIO_SetPinMode(MOTOR_STRATEGY_PORT, MOTOR_STRATEGY_PIN,
                            LL_GPIO_MODE_INPUT);
         LL_GPIO_SetPinPull(MOTOR_STRATEGY_PORT, MOTOR_STRATEGY_PIN,
@@ -261,6 +261,87 @@ static void mk_hw_config()
         NVIC_SetPriority(MOTOR_OPERATING_TIM_IRQN,
                          MOTOR_OPERATING_TIM_IRQN_PRIORITY);
         NVIC_EnableIRQ(MOTOR_OPERATING_TIM_IRQN);
+
+         /* Config LED pins */
+        LL_AHB1_GRP1_EnableClock(LL_AHB1_GRP1_PERIPH_GPIOC);
+        LL_GPIO_SetPinMode(LED_PORT, LED_RED_PIN,
+                           LL_GPIO_MODE_ALTERNATE);
+        LL_GPIO_SetAFPin_0_7(LED_PORT, LED_RED_PIN,
+                              LED_PIN_AF);
+        LL_GPIO_SetPinOutputType(LED_PORT, LED_RED_PIN,
+                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(LED_PORT,LED_RED_PIN,LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinSpeed(LED_PORT,LED_RED_PIN,LL_GPIO_SPEED_FREQ_HIGH);
+
+        LL_GPIO_SetPinMode(LED_PORT, LED_GREEN_PIN,
+                           LL_GPIO_MODE_ALTERNATE);
+        LL_GPIO_SetAFPin_0_7(LED_PORT, LED_GREEN_PIN,
+                              LED_PIN_AF);
+        LL_GPIO_SetPinOutputType(LED_PORT, LED_GREEN_PIN,
+                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(LED_PORT,LED_GREEN_PIN,LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinSpeed(LED_PORT,LED_GREEN_PIN,LL_GPIO_SPEED_FREQ_HIGH);
+
+        LL_GPIO_SetPinMode(LED_PORT, LED_BLUE_PIN,
+                           LL_GPIO_MODE_ALTERNATE);
+        LL_GPIO_SetAFPin_8_15(LED_PORT, LED_BLUE_PIN,
+                              LED_PIN_AF);
+        LL_GPIO_SetPinOutputType(LED_PORT, LED_BLUE_PIN,
+                                 LL_GPIO_OUTPUT_PUSHPULL);
+        LL_GPIO_SetPinPull(LED_PORT,LED_BLUE_PIN,LL_GPIO_PULL_NO);
+        LL_GPIO_SetPinSpeed(LED_PORT,LED_BLUE_PIN,LL_GPIO_SPEED_FREQ_HIGH);
+
+        /* Init timer in PWM mode */
+        LL_APB2_GRP1_EnableClock(LL_APB2_GRP1_PERIPH_TIM8);
+        LL_TIM_EnableUpdateEvent(LED_TIM);
+        LL_TIM_SetClockDivision(LED_TIM, LL_TIM_CLOCKDIVISION_DIV4);
+        LL_TIM_SetCounterMode(LED_TIM, LL_TIM_COUNTERMODE_UP);
+        LL_TIM_SetAutoReload(LED_TIM, LED_TIM_ARR);
+        LL_TIM_SetUpdateSource(LED_TIM, LL_TIM_UPDATESOURCE_REGULAR);
+
+        /* Enable capture mode */
+        LL_TIM_CC_EnableChannel(LED_TIM, LL_TIM_CHANNEL_CH1 |
+                                LL_TIM_CHANNEL_CH2 | LL_TIM_CHANNEL_CH3);
+
+        /* Set PWM mode */
+        LL_TIM_OC_SetMode(LED_TIM, LL_TIM_CHANNEL_CH1, LL_TIM_OCMODE_PWM1);
+        LL_TIM_OC_SetMode(LED_TIM, LL_TIM_CHANNEL_CH2, LL_TIM_OCMODE_PWM1);
+        LL_TIM_OC_SetMode(LED_TIM, LL_TIM_CHANNEL_CH3, LL_TIM_OCMODE_PWM1);
+
+        /* Enable fast mode */
+        LL_TIM_OC_EnableFast(LED_TIM, LL_TIM_CHANNEL_CH1);
+        LL_TIM_OC_EnableFast(LED_TIM, LL_TIM_CHANNEL_CH2);
+        LL_TIM_OC_EnableFast(LED_TIM, LL_TIM_CHANNEL_CH3);
+
+        /* Enable preload */
+        LL_TIM_OC_EnablePreload(LED_TIM, LL_TIM_CHANNEL_CH1);
+        LL_TIM_OC_EnablePreload(LED_TIM, LL_TIM_CHANNEL_CH2);
+        LL_TIM_OC_EnablePreload(LED_TIM, LL_TIM_CHANNEL_CH3);
+        LL_TIM_EnableARRPreload(LED_TIM);
+
+        LL_TIM_OC_EnableClear(LED_TIM,LL_TIM_CHANNEL_CH1);
+        LL_TIM_OC_EnableClear(LED_TIM,LL_TIM_CHANNEL_CH2);
+        LL_TIM_OC_EnableClear(LED_TIM,LL_TIM_CHANNEL_CH3);
+
+        /* Disable advanced fetures of the timer*/
+        LL_TIM_DisableMasterSlaveMode(LED_TIM);
+        LL_TIM_CC_SetLockLevel(LED_TIM,LL_TIM_LOCKLEVEL_OFF);
+        LL_TIM_OC_SetDeadTime(LED_TIM,0);
+        LL_TIM_DisableBRK(LED_TIM);
+        LL_TIM_ConfigBRK(LED_TIM,LL_TIM_BREAK_POLARITY_HIGH);
+        LL_TIM_SetOffStates(LED_TIM,LL_TIM_OSSI_DISABLE,LL_TIM_OSSR_DISABLE);
+        LL_TIM_EnableAutomaticOutput(LED_TIM);
+
+        /* Set initial value */
+        LL_TIM_OC_SetCompareCH1(LED_TIM, LED_TIM_CCR_INIT);
+        LL_TIM_OC_SetCompareCH2(LED_TIM, LED_TIM_CCR_INIT);
+        LL_TIM_OC_SetCompareCH3(LED_TIM, LED_TIM_CCR_INIT);
+
+        /* Enable timer */
+        LL_TIM_GenerateEvent_UPDATE(LED_TIM);
+        LL_TIM_EnableCounter(LED_TIM);
+        LL_TIM_EnableAllOutputs(LED_TIM);
+
         return;
 }
 
@@ -301,6 +382,35 @@ static uint8_t read_side_switch(void)
                                                MOTOR_SIDE_SW_PIN);
 }
 
+static void led_red(void)
+{
+        LL_TIM_OC_SetCompareCH1(LED_TIM, (uint32_t)( 0.9 * LED_TIM_ARR));
+        LL_TIM_OC_SetCompareCH2(LED_TIM, (uint32_t)( 1 ));
+        LL_TIM_OC_SetCompareCH3(LED_TIM, (uint32_t)( 1 ));
+        return;
+}
+static void led_blue(void)
+{
+        LL_TIM_OC_SetCompareCH1(LED_TIM, (uint32_t)( 0.9 * LED_TIM_ARR));
+        LL_TIM_OC_SetCompareCH2(LED_TIM, (uint32_t)( 0.9 * LED_TIM_ARR ));
+        LL_TIM_OC_SetCompareCH3(LED_TIM, (uint32_t)( 1 ));
+        return;
+}
+static void led_yellow(void)
+{
+        LL_TIM_OC_SetCompareCH1(LED_TIM, (uint32_t)( 1 ));
+        LL_TIM_OC_SetCompareCH2(LED_TIM, (uint32_t)( 1 ));
+        LL_TIM_OC_SetCompareCH3(LED_TIM, (uint32_t)( 0.98 * LED_TIM_ARR ));
+        return;
+}
+static void led_cyan(void)
+{
+        LL_TIM_OC_SetCompareCH1(LED_TIM, (uint32_t)( 1 ));
+        LL_TIM_OC_SetCompareCH2(LED_TIM, (uint32_t)( 0.9 * LED_TIM_ARR ));
+        LL_TIM_OC_SetCompareCH3(LED_TIM, (uint32_t)( 0.9 * LED_TIM_ARR ));
+        return;
+}
+
 static void turn_off_all_motors(void)
 {
         static float stop_motors[] = {0.0f, 0.0f, 0.0f};
@@ -314,6 +424,7 @@ static void turn_off_all_motors(void)
          * Turn off manipulators
          */
         manipulators_block();
+        led_red();
         return;
 }
 
@@ -405,6 +516,7 @@ int cmd_set_robot_session(void *args)
 
         mk_ctrl->session = ROBOT_SESSION_DEBUG;
         mk_clr_stop_motors_ctrl(mk_ctrl);
+        led_cyan();
         memcpy(args, "OK", 3);
         return 3;
 error_set_robot_session:
@@ -435,6 +547,11 @@ int cmd_read_cord_status(void *args)
 int cmd_read_side_switch(void *args)
 {
         mk_ctrl->side = read_side_switch();
+        if (mk_ctrl->side == 1){
+                led_blue();
+        } else {
+                led_yellow();
+        }
         memcpy(args, &mk_ctrl->side, 1);
         return 1;
 }
@@ -527,6 +644,9 @@ void TIM7_IRQHandler(void)
                 if (seconds_from_start >= MOTOR_OPERATING_TIME &&
                     mk_ctrl->session != ROBOT_SESSION_DEBUG) {
                         turn_off_all_motors();
+                } else if (seconds_from_start >= 95 &&
+                    mk_ctrl->session != ROBOT_SESSION_DEBUG ) {
+                        manipulators_rise_flag();
                 }
         }
         portYIELD_FROM_ISR(xHigherPriorityTaskWoken);
@@ -539,8 +659,8 @@ void EXTI9_5_IRQHandler(void)
 {
         BaseType_t xHigherPriorityTaskWoken = pdFALSE;
         uint16_t current_tick = xTaskGetTickCountFromISR();
-        if (current_tick > mk_ctrl->strategy_update_time + 10) {
-            mk_ctrl->strategy_num = (mk_ctrl->strategy_num + 1) % \
+        if (current_tick > mk_ctrl->strategy_update_time + 200) {
+                mk_ctrl->strategy_num = (mk_ctrl->strategy_num + 1) % \
                                 NUMBER_OF_STRATEGIES;
         }
         mk_ctrl->strategy_update_time = current_tick;

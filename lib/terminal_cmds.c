@@ -1,5 +1,9 @@
 #include "terminal_cmds.h"
 
+#include "string.h"
+
+#include "bootloader.h"
+
 /*
  * Array of command handlers for terminal
  */
@@ -31,3 +35,16 @@ int cmd_echo_handler(char *args)
 
         return 4;
 }
+
+/*
+ * Proximity sensors bypass command
+ * Output: Array of 9 bytes (255)
+ */
+/*
+int cmd_fake_data(char *args)
+{
+        unsigned char arr[] = {0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF,0xFF};
+        memcpy(args, arr, 9);
+        return 9;
+}
+*/

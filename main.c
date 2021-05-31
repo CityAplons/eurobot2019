@@ -76,6 +76,8 @@ int main() {
 
         xTaskCreateStatic(terminal_manager, "TERM_MAN", TERM_MAN_STACK_DEPTH,
                           NULL, 3, terminal_manager_ts, &terminal_manager_tb);
+       /* xTaskCreateStatic(led_manager, "LED", LED_STACK_DEPTH,
+                          NULL, 3, led_manager_ts, &led_manager_tb);     **/             
         xTaskCreateStatic(motor_kinematics, "MOTOR_KIN", MOTOR_KIN_STACK_DEPTH,
                           NULL, 2, motor_kinematics_ts, &motor_kinematics_tb);
         xTaskCreateStatic(odometry, "ODOMETRY", ODOMETRY_STACK_DEPTH,

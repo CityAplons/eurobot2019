@@ -1,5 +1,9 @@
 Credits
 =======
+  - Eurobot 2020
+     * [Nikita Mikhailovskiy](https://github.com/CityAplons)
+        ¯\_(ツ)_/¯ VSCode toolchain support, new custom PCB for low-level control stack, core contributor
+
 
    - Eurobot 2019
      * [Edgar Kaziakhmedov](https://github.com/edosedgar)
