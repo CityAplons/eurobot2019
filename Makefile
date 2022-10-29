@@ -33,11 +33,13 @@ INC_CORE = -Icore
 INC_PERIPH = -Iplib
 INC_ARM_MATH = -Imath
 INC_DEBUG = -Idebug
+INC_UROS += $(shell find uros/include -name 'include' | sed -E "s/(.*)/-I\1/")
 INCLUDES = -Iold -Ilib
 INCLUDES += $(INC_RTOS)
 INCLUDES += $(INC_CORE)
 INCLUDES += $(INC_PERIPH)
 INCLUDES += $(INC_ARM_MATH)
+INCLUDES += $(INC_UROS)
 
 DEFINES = -DSTM32 -DSTM32F4 -DSTM32F407xx -DHEAP_SIZE=$(HEAP_SIZE) -DUSE_FULL_LL_DRIVER
 DEFINES += -DARM_MATH_CM4
@@ -64,19 +66,19 @@ OPENOCD=openocd
 MCUFLAGS = -mcpu=cortex-m4 -mlittle-endian -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
 	   -mthumb -fsingle-precision-constant -mno-unaligned-access -fcommon
 
-DEBUG_OPTIMIZE_FLAGS = -O0 -ggdb -gdwarf-2
+DEBUG_OPTIMIZE_FLAGS = -O2 -ggdb -gdwarf-2
 
 CFLAGS = -Wall -Wextra
-CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib\
+CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib \
 	       -fdata-sections -ffunction-sections
 
 CFLAGS += $(DEFINES) $(MCUFLAGS) $(DEBUG_OPTIMIZE_FLAGS) $(CFLAGS_EXTRA) $(INCLUDES)
 
-LDFLAGS = -static $(MCUFLAGS) -Wl,--start-group -lgcc -lc -lg -Wl,--end-group \
-	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld -specs=nosys.specs -specs=nano.specs \
-	  -u _printf_float
+LDFLAGS = -static $(MCUFLAGS) -Wl,--start-group uros/libmicroros.a -lnosys -lgcc -lc -lg -Wl,--end-group \
+	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld -specs=nano.specs \
+	  -u _printf_float -Wl,-Map=$(PROJECT).map,--cref
 	  #-u _scanf_float
-
+	  
 .PHONY: dirs all clean flash erase
 
 all: dirs $(PROJECT).bin $(PROJECT).asm
