@@ -62,7 +62,7 @@ OPENOCD=openocd
 # Compiler options
 
 MCUFLAGS = -mcpu=cortex-m4 -mlittle-endian -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
-	   -mthumb -fsingle-precision-constant -mno-unaligned-access
+	   -mthumb -fsingle-precision-constant -mno-unaligned-access -fcommon
 
 DEBUG_OPTIMIZE_FLAGS = -O0 -ggdb -gdwarf-2
 
@@ -73,7 +73,7 @@ CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib\
 CFLAGS += $(DEFINES) $(MCUFLAGS) $(DEBUG_OPTIMIZE_FLAGS) $(CFLAGS_EXTRA) $(INCLUDES)
 
 LDFLAGS = -static $(MCUFLAGS) -Wl,--start-group -lgcc -lc -lg -Wl,--end-group \
-	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld -specs=nano.specs \
+	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld -specs=nosys.specs -specs=nano.specs \
 	  -u _printf_float
 	  #-u _scanf_float
 
