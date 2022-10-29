@@ -12,6 +12,7 @@ HEAP_SIZE = 0x500
 SOURCES_S = core/startup_stm32f407xx.s
 
 SOURCES_RTOS = $(wildcard freertos/*.c freertos/portable/GCC/ARM_CM4F/*.c)
+SOURCES_POSIX = $(wildcard freertos/posix/FreeRTOS-Plus-POSIX/source/*.c)
 SOURCES_RTOS += $(wildcard freertos/portable/MemMang/*.c)
 SOURCES_CORE = $(wildcard core/*.c)
 SOURCES_PERIPH = $(wildcard plib/*.c)
@@ -33,6 +34,9 @@ INC_CORE = -Icore
 INC_PERIPH = -Iplib
 INC_ARM_MATH = -Imath
 INC_DEBUG = -Idebug
+INC_POSIX = -Ifreertos/posix/FreeRTOS-Plus-POSIX/include \
+			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable/empty_portable \
+			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable
 INC_UROS += $(shell find uros/include -name 'include' | sed -E "s/(.*)/-I\1/")
 INCLUDES = -Iold -Ilib
 INCLUDES += $(INC_RTOS)
