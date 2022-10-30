@@ -403,6 +403,8 @@ void odometry(void *arg)
                  * Calculate robot instant global speed and coordinate
                  */
                 odom_calc_glob_params(&odom_ctrl_st);
+
+                rclc_executor_spin_some(&uros_odometry.executor, RCL_MS_TO_NS(10));
         }
         return;
 }

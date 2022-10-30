@@ -580,6 +580,7 @@ void motor_kinematics(void *arg)
                  */
                 LL_TIM_EnableCounter(MOTOR_TR_TIM);
                 //mk_set_pwm(mk_ctrl->prev_pwm_motors);
+                rclc_executor_spin_some(&uros_motor.executor, RCL_MS_TO_NS(10));
                 xSemaphoreGive(mk_ctrl->lock);
         }
         return;
