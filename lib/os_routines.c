@@ -14,8 +14,8 @@ void vApplicationTickHook(void)
 {
 }
 
-void vApplicationStackOverflowHook(xTaskHandle pxTask,
-                                   signed char *pcTaskName)
+void vApplicationStackOverflowHook(TaskHandle_t pxTask,
+                                   char *pcTaskName)
 {
         (void) pxTask;
         (void) pcTaskName;

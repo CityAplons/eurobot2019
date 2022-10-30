@@ -13,16 +13,23 @@ SOURCES_S = core/startup_stm32f407xx.s
 
 SOURCES_RTOS = $(wildcard freertos/*.c freertos/portable/GCC/ARM_CM4F/*.c)
 SOURCES_POSIX = $(wildcard freertos/posix/FreeRTOS-Plus-POSIX/source/*.c)
-SOURCES_RTOS += $(wildcard freertos/portable/MemMang/*.c)
 SOURCES_CORE = $(wildcard core/*.c)
 SOURCES_PERIPH = $(wildcard plib/*.c)
 SOURCES_ARM_MATH = $(wildcard math/*.c)
+SOURCES_UROS_COMPAT = uros/compat/allocators.c uros/compat/transports.c
+
+ifndef USE_ORIGINAL_HEAP4
+SOURCES_UROS_COMPAT += uros/compat/memory_manager.c
+else
+SOURCES_RTOS += $(wildcard freertos/portable/MemMang/*.c)
+endif
 
 SOURCES_C = $(wildcard *.c old/*.c lib/*.c)
 SOURCES_C += $(SOURCES_RTOS)
 SOURCES_C += $(SOURCES_CORE)
 SOURCES_C += $(SOURCES_PERIPH)
 SOURCES_C += $(SOURCES_ARM_MATH)
+SOURCES_C += $(SOURCES_UROS_COMPAT)
 
 SOURCES = $(SOURCES_S) $(SOURCES_C)
 OBJS = $(SOURCES_S:.s=.o) $(SOURCES_C:.c=.o)
@@ -37,6 +44,7 @@ INC_DEBUG = -Idebug
 INC_POSIX = -Ifreertos/posix/FreeRTOS-Plus-POSIX/include \
 			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable/empty_portable \
 			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable
+INC_UROS_COMPAT = -Iuros/compat
 INC_UROS += $(shell find uros/include -name 'include' | sed -E "s/(.*)/-I\1/")
 INCLUDES = -Iold -Ilib
 INCLUDES += $(INC_RTOS)
@@ -44,6 +52,7 @@ INCLUDES += $(INC_CORE)
 INCLUDES += $(INC_PERIPH)
 INCLUDES += $(INC_ARM_MATH)
 INCLUDES += $(INC_UROS)
+INCLUDES += $(INC_UROS_COMPAT)
 
 DEFINES = -DSTM32 -DSTM32F4 -DSTM32F407xx -DHEAP_SIZE=$(HEAP_SIZE) -DUSE_FULL_LL_DRIVER
 DEFINES += -DARM_MATH_CM4
