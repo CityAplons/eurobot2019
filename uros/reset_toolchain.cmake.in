@@ -11,10 +11,14 @@ set(CMAKE_CXX_COMPILER_WORKS 1 CACHE INTERNAL "")
 
 set(FLAGS "-mcpu=cortex-m4 -mfloat-abi=hard -mfpu=fpv4-sp-d16 \
            -mthumb -O2 -gdwarf-2 -Wall \
-           -nostdlib -fdata-sections -ffunction-sections \
-           -D'RCUTILS_LOG_MIN_SEVERITY=RCUTILS_LOG_MIN_SEVERITY_NONE'" CACHE STRING "" FORCE)
+           -fdata-sections -ffunction-sections \
+           -D'RCUTILS_LOG_MIN_SEVERITY=RCUTILS_LOG_MIN_SEVERITY_NONE' -D_TIMEVAL_DEFINED" CACHE STRING "" FORCE)
 
-set(CMAKE_C_FLAGS_INIT "${FLAGS} -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='" CACHE STRING "" FORCE)
-set(CMAKE_CXX_FLAGS_INIT "${FLAGS} -fno-rtti -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='" CACHE STRING "" FORCE)
+set(CMAKE_C_FLAGS_INIT "-std=c11 ${FLAGS} -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='" CACHE STRING "" FORCE)
+set(CMAKE_CXX_FLAGS_INIT "-std=c++14 ${FLAGS} -fno-rtti -DCLOCK_MONOTONIC=0 -D'__attribute__(x)='" CACHE STRING "" FORCE)
+
+include_directories(SYSTEM 
+	@INCLUDES@
+    )
 
 set(__BIG_ENDIAN__ 0)

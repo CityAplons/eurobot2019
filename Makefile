@@ -29,6 +29,7 @@ SOURCES_C += $(SOURCES_RTOS)
 SOURCES_C += $(SOURCES_CORE)
 SOURCES_C += $(SOURCES_PERIPH)
 SOURCES_C += $(SOURCES_ARM_MATH)
+SOURCES_C += $(SOURCES_POSIX)
 SOURCES_C += $(SOURCES_UROS_COMPAT)
 
 SOURCES = $(SOURCES_S) $(SOURCES_C)
@@ -37,17 +38,21 @@ OBJS = $(SOURCES_S:.s=.o) $(SOURCES_C:.c=.o)
 # Includes and Defines
 
 INC_RTOS = -Ifreertos -Ifreertos/include -Ifreertos/portable/GCC/ARM_CM4F
+INC_POSIX = -Ifreertos/posix/FreeRTOS-Plus-POSIX/include \
+			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable/st/stm32l475_discovery \
+			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable \
+			-Ifreertos/posix/include/private \
+			-Ifreertos/posix/include
 INC_CORE = -Icore
 INC_PERIPH = -Iplib
 INC_ARM_MATH = -Imath
 INC_DEBUG = -Idebug
-INC_POSIX = -Ifreertos/posix/FreeRTOS-Plus-POSIX/include \
-			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable/empty_portable \
-			-Ifreertos/posix/FreeRTOS-Plus-POSIX/include/portable
 INC_UROS_COMPAT = -Iuros/compat
 INC_UROS += $(shell find uros/include -name 'include' | sed -E "s/(.*)/-I\1/")
+
 INCLUDES = -Iold -Ilib
 INCLUDES += $(INC_RTOS)
+INCLUDES += $(INC_POSIX)
 INCLUDES += $(INC_CORE)
 INCLUDES += $(INC_PERIPH)
 INCLUDES += $(INC_ARM_MATH)
@@ -88,7 +93,7 @@ CFLAGS_EXTRA = -nostartfiles -nodefaultlibs -nostdlib \
 CFLAGS += $(DEFINES) $(MCUFLAGS) $(DEBUG_OPTIMIZE_FLAGS) $(CFLAGS_EXTRA) $(INCLUDES)
 
 LDFLAGS = -static $(MCUFLAGS) -Wl,--start-group uros/libmicroros.a -lnosys -lgcc -lc -lg -Wl,--end-group \
-	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld -specs=nano.specs \
+	  -Wl,--gc-sections -T STM32F407VGTx_FLASH.ld --specs=nosys.specs -specs=nano.specs \
 	  -u _printf_float -Wl,-Map=$(PROJECT).map,--cref
 	  #-u _scanf_float
 	  
@@ -102,7 +107,7 @@ ${OUTPATH}:
 	mkdir -p ${OUTPATH}
 
 clean:
-	$(RM) $(OBJS) $(PROJECT).elf $(PROJECT).bin $(PROJECT).asm
+	$(RM) $(OBJS) $(PROJECT).elf $(PROJECT).bin $(PROJECT).asm $(EXTENSIONS_DIR)/uros/reset_toolchain.cmake
 
 # Hardware specific
 
@@ -140,3 +145,21 @@ $(PROJECT).elf: $(OBJS)
 
 %.asm: %.elf
 	$(OBJDUMP) -dwh $< > $@
+
+EXTENSIONS_DIR = $(shell pwd)
+
+COLCON_INCLUDES += $(EXTENSIONS_DIR)/freertos
+COLCON_INCLUDES += $(EXTENSIONS_DIR)/freertos/posix/FreeRTOS-Plus-POSIX/include
+COLCON_INCLUDES += $(EXTENSIONS_DIR)/freertos/posix/include
+COLCON_INCLUDES += $(EXTENSIONS_DIR)/freertos/posix/include/private
+COLCON_INCLUDES += $(EXTENSIONS_DIR)/freertos/posix/include/FreeRTOS_POSIX
+COLCON_INCLUDES += $(EXTENSIONS_DIR)/freertos/posix/include/FreeRTOS_POSIX/sys
+COLCON_INCLUDES_STR := $(foreach x,$(COLCON_INCLUDES),$(x)\n)
+
+colcon_toolchain: $(EXTENSIONS_DIR)/uros/reset_toolchain.cmake.in
+	rm -f $(EXTENSIONS_DIR)/uros/reset_toolchain.cmake; \
+	cat $(EXTENSIONS_DIR)/uros/reset_toolchain.cmake.in | \
+		sed "s/@ARCH_CPU_FLAGS@/\"$(MCUFLAGS)\"/g" | \
+		sed "s/@ARCH_OPT_FLAGS@/\"$(DEBUG_OPTIMIZE_FLAGS)\"/g" | \
+		sed "s/@INCLUDES@/$(subst /,\/,$(COLCON_INCLUDES_STR))/g" \
+		> $(EXTENSIONS_DIR)/uros/reset_toolchain.cmake

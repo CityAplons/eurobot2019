@@ -13,10 +13,31 @@
 #include "task.h"
 #include "terminal_cmds.h"
 
+#include <transports.h> 
+#include <allocators.h>
+#include <uxr/client/client.h>
+#include <ucdr/microcdr.h>
+#include <rmw_microros/rmw_microros.h> 
+
+uros_t uros_data = {
+        .ready = 0,
+        .connected = 0,
+        .prefix = "racer"
+};
+
+typedef struct terminal_uros {
+        rcl_publisher_t publisher;
+        rcl_subscription_t subscriber;
+        std_msgs__msg__String rx_msg;
+        std_msgs__msg__String tx_msg;
+        rclc_executor_t executor;
+} terminal_uros_t;
+
 /*
  * Private task notifier
  */
 static terminal_task_t * term_ctrl;
+static terminal_uros_t * term_pubsub;
 
 static void terminal_hw_config()
 {
@@ -157,36 +178,25 @@ static void terminal_hw_config()
         return;
 }
 
-static int term_request(terminal_task_t *term_t)
+static void term_request(const void * msgin)
 {
-        if (ulTaskNotifyTake(pdTRUE, portMAX_DELAY)) {
-                term_t->com_args = &(term_t->buffer[1]);
-                return (int)(term_t->buffer[0]);
-        }
-        return 0;
-}
+        const std_msgs__msg__String * msg = (const std_msgs__msg__String *)msgin;
 
-static void term_response(terminal_task_t *term_t, int resp_len)
-{
-        int i = 0;
+        int command_code = msg->data.data[0];
+        if (!IS_COMMAND_VALID(command_code) ||
+            !commands_handlers[command_code])
+                return;
+        
+        memcpy(term_ctrl->com_args, msg->data.data + 1, msg->data.size - 1);
+        int resp_len = commands_handlers[command_code](term_ctrl->com_args);
 
-        LL_USART_ClearFlag_TC(term_t->dev);
-        while (resp_len--) {
-                while (!LL_USART_IsActiveFlag_TXE(term_t->dev))
-                        taskYIELD();
-                LL_USART_TransmitData8(term_t->dev, term_t->com_args[i++]);
-        }
-        while (!LL_USART_IsActiveFlag_TC(term_t->dev))
-                taskYIELD();
-        return;
+        term_pubsub->tx_msg.data.size = resp_len;
+        RCCHECK(rcl_publish(&term_pubsub->publisher, (const void*)&term_pubsub->tx_msg, NULL));
 }
 
 void terminal_manager(void *arg)
 {
         (void) arg;
-
-        int command_code = 0;
-        int resp_len = 0;
         terminal_task_t term_t;
 
         term_t.dev = TERM_USART;
@@ -197,14 +207,63 @@ void terminal_manager(void *arg)
         term_ctrl = &term_t;
         terminal_hw_config();
 
-        while (1) {
+        // iosysc_setdev(term_t.dev);
 
-                command_code = term_request(&term_t);
-                if (!IS_COMMAND_VALID(command_code) ||
-                    !commands_handlers[command_code])
-                        continue;
-                resp_len = commands_handlers[command_code](term_t.com_args);
-                term_response(&term_t, resp_len);
+        rmw_uros_set_custom_transport( 
+                1, 
+                &term_t, 
+                freertos_serial_open, 
+                freertos_serial_close, 
+                freertos_serial_write, 
+                freertos_serial_read); 
+
+        uros_data.allocator = rcutils_get_zero_initialized_allocator();
+        uros_data.allocator.allocate = __freertos_allocate;
+        uros_data.allocator.deallocate = __freertos_deallocate;
+        uros_data.allocator.reallocate = __freertos_reallocate;
+        uros_data.allocator.zero_allocate = __freertos_zero_allocate;
+
+        if (!rcutils_set_default_allocator(&uros_data.allocator)) {
+                printf("Error on default allocators (line %d)\n",__LINE__); 
+        }
+        uros_data.ready = 1;
+
+        RCCHECK(rclc_support_init(&uros_data.support, 0, NULL, &uros_data.allocator));
+        RCCHECK(rclc_node_init_default(&uros_data.node, "stm32_node", uros_data.prefix, &uros_data.support));
+        uros_data.connected = 1;
+
+        terminal_uros_t terminal_nodelet;
+
+        // create terminal comaptibility publisher
+	RCCHECK(rclc_publisher_init_best_effort(
+		&terminal_nodelet.publisher,
+		&uros_data.node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
+		"compat/rx"));
+        
+        // create terminal comaptibility subscriber
+	RCCHECK(rclc_subscription_init_default(
+		&terminal_nodelet.subscriber,
+		&uros_data.node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(std_msgs, msg, String),
+		"compat/tx"));
+
+	terminal_nodelet.tx_msg.data.data = term_t.com_args;
+	terminal_nodelet.tx_msg.data.capacity = TERM_CH_BUF_SIZE;
+
+	char incoming_buffer[TERM_UROS_MSG_CAP];
+	terminal_nodelet.rx_msg.data.data = incoming_buffer;
+	terminal_nodelet.rx_msg.data.capacity = TERM_UROS_MSG_CAP;
+
+	RCCHECK(rclc_executor_init(&terminal_nodelet.executor, &uros_data.support.context, 3, &uros_data.allocator));
+	RCCHECK(rclc_executor_add_subscription(&terminal_nodelet.executor, &terminal_nodelet.subscriber, &terminal_nodelet.rx_msg,
+		&term_request, ON_NEW_DATA));
+
+        term_pubsub = &terminal_nodelet;
+
+        while (1) {
+                rclc_executor_spin_some(&terminal_nodelet.executor, RCL_MS_TO_NS(10));
+                vTaskDelay(10 * portTICK_PERIOD_MS);
         }
         return;
 }

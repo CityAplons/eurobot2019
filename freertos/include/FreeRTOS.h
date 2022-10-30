@@ -938,7 +938,7 @@
 #endif
 
 #ifndef configUSE_POSIX_ERRNO
-    #define configUSE_POSIX_ERRNO    0
+    #define configUSE_POSIX_ERRNO    1
 #endif
 
 #ifndef configUSE_SB_COMPLETED_CALLBACK
