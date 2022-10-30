@@ -12,6 +12,23 @@
 #include "math.h"
 #include "arm_math.h"
 
+#include "uros_interfaces.h"
+#include <geometry_msgs/msg/twist.h>
+
+/*
+ * micro-ROS related structures
+ */
+
+extern uros_t uros_data;
+
+typedef struct motor_uros {
+        rcl_subscription_t subscriber;
+        geometry_msgs__msg__Twist target;
+        rclc_executor_t executor;
+} motor_uros_t;
+
+static motor_uros_t * motor_sub;
+
 /*
  * Main motor kinematics control structure
  */
@@ -447,6 +464,55 @@ static void turn_off_all_motors(void)
  */
 
 /*
+ * Srart of micro-ROS section
+ */
+
+void subscription_callback(const void * msgin)
+{
+	const geometry_msgs__msg__Twist * msg = (const geometry_msgs__msg__Twist *)msgin;
+
+        if (!mk_ctrl) 
+                return;
+
+        xSemaphoreTake(mk_ctrl->lock, portMAX_DELAY);
+        mk_set_speed_ctrl(mk_ctrl);
+        mk_ctrl->vel_x = msg->linear.x;
+        mk_ctrl->vel_y = msg->linear.y;
+        mk_ctrl->wz = msg->angular.z;
+        xSemaphoreGive(mk_ctrl->lock);
+
+        xTaskNotifyGive(mk_ctrl->mk_notify);
+}
+
+static void uros_motors_init_control(void)
+{      
+        while (uros_data.ready != 1 && uros_data.connected != 1) {
+                vTaskDelay(100 * portTICK_PERIOD_MS);
+        }
+
+        motor_sub->target.linear.x = 0.f;
+        motor_sub->target.linear.y = 0.f;
+        motor_sub->target.angular.z = 0.f;
+
+        RCCHECK(rclc_subscription_init_default(
+		&motor_sub->subscriber,
+		&uros_data.node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Twist),
+		"/cmd_vel"));
+
+        RCCHECK(rclc_executor_init(&motor_sub->executor, &uros_data.support.context, 1, &uros_data.allocator));
+	RCCHECK(rclc_executor_add_subscription(
+                &motor_sub->executor, 
+                &motor_sub->subscriber, 
+                &motor_sub->target, 
+                &subscription_callback, ON_NEW_DATA));
+}
+
+/*
+ * End of micro-ROS section
+ */
+
+/*
  * Main motor kinematics task running by FreeRTOS
  */
 void motor_kinematics(void *arg)
@@ -479,6 +545,10 @@ void motor_kinematics(void *arg)
         mk_ctrl_st.lock = xSemaphoreCreateMutexStatic(&mutex_buffer);
         mk_ctrl_st.mk_notify = xTaskGetCurrentTaskHandle();
         mk_ctrl = &mk_ctrl_st;
+
+        motor_uros_t uros_motor;
+        motor_sub = &uros_motor;
+        uros_motors_init_control();
 
         /*
          * Stop motors and wait for starting cord

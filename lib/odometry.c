@@ -7,6 +7,25 @@
 #include "math.h"
 #include "arm_math.h"
 
+#include "uros_interfaces.h"
+#include <geometry_msgs/msg/pose.h>
+#include <geometry_msgs/msg/quaternion.h>
+
+/*
+ * micro-ROS related structures
+ */
+
+extern uros_t uros_data;
+
+typedef struct odom_uros {
+        rcl_publisher_t publisher;
+        geometry_msgs__msg__Pose odom;
+        rclc_executor_t executor;
+        rcl_timer_t timer;
+} odom_uros_t;
+
+static odom_uros_t * odom_pub;
+
 /*
  * Main motor kinematics control structure
  */
@@ -288,6 +307,63 @@ static void odom_calc_glob_params(odometry_ctrl_t *odom_ctrl)
         return;
 }
 
+
+/*
+ * Srart of micro-ROS section
+ */
+
+static void calc_2Dquaternion(geometry_msgs__msg__Quaternion* quaternion, float yaw)
+{
+        quaternion->w = cos(yaw / 2);
+        quaternion->x = 0.f;
+        quaternion->y = 0.f;
+        quaternion->z = sin(yaw / 2);
+}
+
+void timer_callback(rcl_timer_t * timer, int64_t last_call_time)
+{
+	RCLC_UNUSED(last_call_time);
+
+	if (timer != NULL) {
+                odom_pub->odom.position.x = odom_ctrl->coordinate[0];
+                odom_pub->odom.position.y = odom_ctrl->coordinate[1];
+                calc_2Dquaternion(&odom_pub->odom.orientation, odom_ctrl->coordinate[2]);
+
+		RCCHECK(rcl_publish(&odom_pub->publisher, &odom_pub->odom, NULL));
+	}
+}
+
+static void uros_motors_init_odom(void)
+{
+        while (uros_data.ready != 1 && uros_data.connected != 1) {
+                vTaskDelay(100 * portTICK_PERIOD_MS);
+        }
+
+        calc_2Dquaternion(&odom_pub->odom.orientation, 0.f);
+        odom_pub->odom.position.x = 0.f;
+        odom_pub->odom.position.y = 0.f;
+
+        RCCHECK(rclc_publisher_init_best_effort(
+		&odom_pub->publisher,
+		&uros_data.node,
+		ROSIDL_GET_MSG_TYPE_SUPPORT(geometry_msgs, msg, Pose),
+		"odom"));
+
+	const unsigned int timer_timeout = 50;
+	RCCHECK(rclc_timer_init_default(
+		&odom_pub->timer,
+		&uros_data.support,
+		RCL_MS_TO_NS(timer_timeout),
+		timer_callback));
+
+	RCCHECK(rclc_executor_init(&odom_pub->executor, &uros_data.support.context, 1, &uros_data.allocator));
+	RCCHECK(rclc_executor_add_timer(&odom_pub->executor, &odom_pub->timer));
+}
+
+/*
+ * End of micro-ROS section
+ */
+
 void odometry(void *arg)
 {
         (void) arg;
@@ -308,6 +384,10 @@ void odometry(void *arg)
         odom_ctrl_st.odom_notify = xTaskGetCurrentTaskHandle();
         odom_ctrl = &odom_ctrl_st;
         odom_hw_config(&odom_ctrl_st);
+
+        odom_uros_t uros_odometry;
+        odom_pub = &uros_odometry;
+        uros_motors_init_odom();
 
         while (1) {
                 ulTaskNotifyTake(pdTRUE, portMAX_DELAY);

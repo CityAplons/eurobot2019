@@ -19,6 +19,8 @@
 #include <ucdr/microcdr.h>
 #include <rmw_microros/rmw_microros.h> 
 
+#include <std_msgs/msg/string.h>
+
 uros_t uros_data = {
         .ready = 0,
         .connected = 0,

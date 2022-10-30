@@ -6,14 +6,7 @@
 #include "FreeRTOS.h"
 #include "task.h"
 #include "terminal_cmds.h"
-
-#include <rcl/rcl.h>
-#include <rclc/rclc.h>
-#include <rclc/executor.h>
-
-#include <std_msgs/msg/string.h>
-
-#define RCCHECK(fn) { rcl_ret_t temp_rc = fn; if((temp_rc != RCL_RET_OK)){printf("Failed status on line %d: %d. Continuing.\n",__LINE__,(int)temp_rc);}}
+#include "uros_interfaces.h"
 
 typedef struct {
         USART_TypeDef *dev;
@@ -22,15 +15,6 @@ typedef struct {
         uint8_t *stm_dr_buff;
         TaskHandle_t xTaskToNotify;
 } terminal_task_t;
-
-typedef struct {
-        uint8_t ready;
-        uint8_t connected;
-        rcl_allocator_t allocator;
-        rclc_support_t support;
-        rcl_node_t node;
-        char prefix[];
-} uros_t;
 
 #define TERM_UROS_MSG_CAP       16
 #define TERM_CH_BUF_SIZE        512
